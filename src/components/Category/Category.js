@@ -6,6 +6,7 @@ export default function Category() {
   const [categories, setCategories] = useState([]);
   const [message, setMessage] = useState("");
 
+  // use
   useEffect(() => {
     fetch("https://elec-ecommerce-back.vercel.app/getAllCategory")
       .then((response) => response.json())
