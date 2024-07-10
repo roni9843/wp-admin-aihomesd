@@ -234,7 +234,7 @@ export default function ProductDashboard() {
                       <button
                         onClick={() =>
                           window.open(
-                            `${window.location.origin}/product/product-edit/productId=${p._id}`,
+                            `${window.location.origin}/elec-ecommerce-dashboard/product/product-edit/productId=${p._id}`,
                             "_blank"
                           )
                         }

@@ -179,11 +179,15 @@ export const Playground = () => {
     const parts = props.split("/");
 
     // Construct the new URL
-    const newUrl = `${window.location.origin}/${props}`;
+    const newUrl = `${window.location.origin}/elec-ecommerce-dashboard/${props}`;
 
     // Update state or perform any other necessary actions based on parts array
     if (parts.length > 1) {
       // Example: Update state based on the parts array
+
+      console.log("this is main menu ", parts[0]);
+      console.log("this is sub menu ", parts[1]);
+
       setMainMenu(parts[0]);
       setSubMenu(parts[1]);
     }
@@ -222,12 +226,12 @@ export const Playground = () => {
     const parts = path.split("/");
 
     // main menu
-    parts[1] && setMainMenu(parts[1]);
+    parts[2] && setMainMenu(parts[2]);
     // sub menu menu
-    parts[2] && setSubMenu(parts[2]);
+    parts[3] && setSubMenu(parts[3]);
 
-    if (parts[3]) {
-      setNestedMenu(parts[3].split("=")[0]);
+    if (parts[4]) {
+      setNestedMenu(parts[4].split("=")[0]);
     }
   }, []);
 
