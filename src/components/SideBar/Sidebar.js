@@ -174,20 +174,12 @@ export const Playground = () => {
   const setActiveOption = (props) => {
     setNestedMenu("");
 
-    console.log("this is page --> ");
-
     const parts = props.split("/");
 
     // Construct the new URL
     const newUrl = `${window.location.origin}/elec-ecommerce-dashboard/${props}`;
 
-    // Update state or perform any other necessary actions based on parts array
     if (parts.length > 1) {
-      // Example: Update state based on the parts array
-
-      console.log("this is main menu ", parts[0]);
-      console.log("this is sub menu ", parts[1]);
-
       setMainMenu(parts[0]);
       setSubMenu(parts[1]);
     }
@@ -197,27 +189,6 @@ export const Playground = () => {
 
     console.log(props);
   };
-
-  // const setActiveOption = (props) => {
-  //   // window.open(`${window.location.origin}/${props}`);
-
-  //   props = product/product-add
-
-  //   now when i click this function then change route with out refresh in react jsx..do not use react router dom
-
-  //   http://localhost:5000/product/product-add
-
-  //   const parts = props.split("/");
-
-  //   // main menu
-  //   parts[0] && setMainMenu(parts[1]);
-  //   // sub menu menu
-  //   parts[1] && setSubMenu(parts[2]);
-
-  //   // window.location.href = `${window.location.origin}/${props}`;
-
-  //   console.log(props);
-  // };
 
   useLayoutEffect(() => {
     // Extract the productId from the URL path

@@ -5,6 +5,7 @@ import React, { useEffect, useLayoutEffect, useState } from "react";
 export default function EditProductPage() {
   const [productId, setProductId] = useState("");
   const [productData, setProductData] = useState({});
+  const [allCategory, setAllCategory] = useState([]);
 
   useLayoutEffect(() => {
     // Extract the productId from the URL path
@@ -16,6 +17,7 @@ export default function EditProductPage() {
 
   useEffect(() => {
     callProduct(productId);
+    callCategory();
   }, [productId]);
 
   const callProduct = async (productId) => {
@@ -43,6 +45,36 @@ export default function EditProductPage() {
       // Handle the fetched product data here
     } catch (error) {
       console.error("There was a problem with the fetch operation:", error);
+    }
+  };
+
+  const callCategory = async (productId) => {
+    const url = "https://elec-ecommerce-back.vercel.app/getAllCategory";
+
+    try {
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+
+      const data = await response.json();
+
+      setAllCategory(data);
+      // Handle the fetched product data here
+    } catch (error) {
+      console.error("There was a problem with the fetch operation:", error);
+    }
+  };
+
+  const productDescriptionFunc = async (props) => {
+    if (Object.keys(productData).length !== 0) {
+      console.log("this is inside call ", productData);
+
+      setProductData({
+        ...productData,
+        productDescription: props,
+      });
     }
   };
 
@@ -119,8 +151,28 @@ export default function EditProductPage() {
                     <select
                       className="form-control"
                       id="productCategory"
-                      //  value={selectedCategory}
-                      //  onChange={handleCategoryChange}
+                      //   value={productData && productData.category.category}
+                      // onChange={(e) =>
+                      // setProductData({
+                      //   ...productData,
+                      //   category: e.target.value,
+                      // })
+                      // }
+                      value={productData && productData?.category?.category}
+                      onChange={(e) => {
+                        let targetCategory = allCategory.filter(
+                          (c) => c.category === e.target.value
+                        );
+
+                        console.log("this is category", targetCategory[0]);
+
+                        setProductData((prevData) => ({
+                          ...prevData,
+                          category: {
+                            ...targetCategory[0],
+                          },
+                        }));
+                      }}
                       style={{
                         borderRadius: "5px",
                         borderColor: "#ced4da",
@@ -129,9 +181,12 @@ export default function EditProductPage() {
                         width: "100%",
                       }}
                     >
-                      <option value="" disabled>
-                        Select a category
-                      </option>
+                      {allCategory &&
+                        allCategory.map((c) => (
+                          <option key={c.category} value={c.category}>
+                            {c.category}
+                          </option>
+                        ))}
                     </select>
                   </div>
                 </div>
@@ -144,8 +199,8 @@ export default function EditProductPage() {
                     type="number"
                     className="form-control"
                     id="productStock"
-                    //  value={productStock}
-                    //    onChange={(e) => setProductStock(e.target.value)}
+                    value={productData.productStock}
+                    onChange={(e) => setProductData(e.target.value)}
                     style={{
                       borderRadius: "5px",
                       borderColor: "#ced4da",
@@ -162,8 +217,16 @@ export default function EditProductPage() {
                     type="text"
                     className="form-control"
                     id="productTags"
-                    //  value={productTags}
-                    //  onChange={handleTagChange}
+                    value={productData?.productTag?.join(", ")}
+                    onChange={(e) => {
+                      const tagsArray = e.target.value
+                        .split(",")
+                        .map((tag) => tag.trim());
+                      setProductData({
+                        ...productData,
+                        productTag: tagsArray,
+                      });
+                    }}
                     style={{
                       borderRadius: "5px",
                       borderColor: "#ced4da",
@@ -178,8 +241,13 @@ export default function EditProductPage() {
                   <label>Product Live</label>
                   <select
                     className="form-control"
-                    //   value={productLive}
-                    //   onChange={(e) => setProductLive(e.target.value)}
+                    value={productData.productLive}
+                    onChange={(e) => {
+                      setProductData({
+                        ...productData,
+                        productLive: e.target.value === "true" ? true : false,
+                      });
+                    }}
                     style={{
                       borderRadius: "5px",
                       borderColor: "#ced4da",
@@ -189,8 +257,8 @@ export default function EditProductPage() {
                     }}
                   >
                     <option value="">Select an option</option>
-                    <option value="yes">Yes</option>
-                    <option value="no">No</option>
+                    <option value={true}>Yes</option>
+                    <option value={false}>No</option>
                   </select>
                 </div>
               </div>
@@ -199,8 +267,12 @@ export default function EditProductPage() {
                 <label htmlFor="productDescription">Product Description</label>
                 <CKEditor
                   editor={ClassicEditor}
-                  //   data={productDescription}
+                  data={productData.productDescription}
+                  onChange={async (event, editor) => {
+                    const data = editor.getData();
 
+                    productDescriptionFunc(data);
+                  }}
                   style={{
                     borderRadius: "5px",
                     borderColor: "#ced4da",
