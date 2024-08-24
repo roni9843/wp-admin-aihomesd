@@ -9,12 +9,14 @@ import {
   faWrench,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import React, { useLayoutEffect, useState } from "react";
+import React, { useEffect, useLayoutEffect, useState } from "react";
 import { Menu, MenuItem, Sidebar, SubMenu } from "react-pro-sidebar";
 import Category from "../Category/Category";
 import Crop from "../Crop/Crop";
 import EditProduct from "../EditProduct/EditProduct";
 import EditProductPage from "../EditProduct/EditProductPage";
+import Order from "../order/Order";
+import SingleOrder from "../order/SingleOrder";
 import Product from "../Product/Product";
 import "./SidebarStyle.css";
 
@@ -206,6 +208,17 @@ export const Playground = () => {
     }
   }, []);
 
+  const [orders, setOrders] = useState([]);
+
+  useEffect(() => {
+    fetch("http://localhost:8000/getAllOrder") // Replace with your backend API URL
+      .then((response) => response.json())
+      .then((data) => {
+        setOrders(data);
+      })
+      .catch((error) => console.error("Error fetching orders:", error));
+  }, []);
+
   return (
     <div
       id="sideBard"
@@ -273,6 +286,13 @@ export const Playground = () => {
               </Typography>
             </div>
             <Menu menuItemStyles={menuItemStyles}>
+              <MenuItem
+                onClick={() => setActiveOption("order/order-list")}
+                icon={<FontAwesomeIcon icon={faCalendar} />}
+                suffix={<Badge variant="success">{orders?.length}</Badge>}
+              >
+                Order
+              </MenuItem>
               <SubMenu
                 label="Product"
                 icon={<FontAwesomeIcon icon={faShoppingCart} />}
@@ -300,6 +320,7 @@ export const Playground = () => {
                   Image Cropper
                 </MenuItem>
               </SubMenu>
+
               <SubMenu
                 label="Charts"
                 icon={<FontAwesomeIcon icon={faChartBar} />}
@@ -431,9 +452,24 @@ export const Playground = () => {
             zIndex: "1000",
             boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
           }}
-        ></div>
+        >
+          <button
+            className="sb-button"
+            onClick={() => setToggled(!toggled)}
+            style={{
+              backgroundColor: theme === "dark" ? "#1abc9c" : "#ff6f61",
+              color: "#fff",
+              border: "none",
+              padding: "8px 16px",
+              borderRadius: "4px",
+              cursor: "pointer",
+            }}
+          >
+            Toggle
+          </button>
+        </div>
 
-        <div className="mt-5 pt-5">
+        <div className="mt-5 ">
           {mainMenu === "product" && (
             <div>
               {nestedMenu === "productId" ? (
@@ -445,6 +481,15 @@ export const Playground = () => {
                   {subMenu === "product-category" && <Category />}
                   {subMenu === "product-image-cropper" && <Crop />}
                 </div>
+              )}
+            </div>
+          )}
+          {mainMenu === "order" && (
+            <div>
+              {nestedMenu === "orderId" ? (
+                <SingleOrder></SingleOrder>
+              ) : (
+                <div>{subMenu === "order-list" && <Order />}</div>
               )}
             </div>
           )}
