@@ -25,7 +25,7 @@ const OrderMetrics = () => {
   const [orders, setOrders] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:8000/getAllOrder") // Replace with your backend API URL
+    fetch("https://backend.aihomesd.com/getAllOrder") // Replace with your backend API URL
       .then((response) => response.json())
       .then((data) => {
         const sortedData = data.sort(
@@ -40,7 +40,7 @@ const OrderMetrics = () => {
 
   // use
   useEffect(() => {
-    fetch("http://localhost:8000/getAllCategory")
+    fetch("https://backend.aihomesd.com/getAllCategory")
       .then((response) => response.json())
       .then((data) => setCategories(data))
       .catch((error) => console.error("Error fetching categories:", error));
@@ -49,7 +49,7 @@ const OrderMetrics = () => {
   const [customerData, setCustomerData] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:8000/getAllUser")
+    fetch("https://backend.aihomesd.com/getAllUser")
       .then((response) => response.json())
       .then((data) => {
         console.log("data -> ", data);

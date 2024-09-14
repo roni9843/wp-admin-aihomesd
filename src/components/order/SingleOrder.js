@@ -19,7 +19,7 @@ export default function SingleOrder() {
   }, [orderId]);
 
   const callProduct = async (orderId) => {
-    const url = "http://localhost:8000/getOrderByOrderId";
+    const url = "https://backend.aihomesd.com/getOrderByOrderId";
     const payload = { orderId };
 
     try {
@@ -46,7 +46,7 @@ export default function SingleOrder() {
   };
 
   const handleSaveChanges = async () => {
-    const url = `http://localhost:8000/updateOrderStatus/${orderId}`;
+    const url = `https://backend.aihomesd.com/updateOrderStatus/${orderId}`;
     const payload = { status };
 
     try {

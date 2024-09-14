@@ -50,7 +50,9 @@ export default function Product() {
     // Fetch categories when the component mounts
     const fetchCategories = async () => {
       try {
-        const response = await fetch("http://localhost:8000/getAllCategory");
+        const response = await fetch(
+          "https://backend.aihomesd.com/getAllCategory"
+        );
         const data = await response.json();
         // Assuming your response contains an array of categories
         setProductCategory(data);
@@ -149,7 +151,7 @@ export default function Product() {
   //   };
 
   //   try {
-  //     const response = await fetch("http://localhost:8000/postProduct", {
+  //     const response = await fetch("https://backend.aihomesd.com/postProduct", {
   //       method: "POST",
   //       headers: {
   //         "Content-Type": "application/json",
@@ -280,7 +282,7 @@ export default function Product() {
     console.log("this is data -> ", productData);
 
     try {
-      const response = await fetch("http://localhost:8000/postProduct", {
+      const response = await fetch("https://backend.aihomesd.com/postProduct", {
         method: "POST",
         headers: {
           "Content-Type": "application/json", // Send as JSON

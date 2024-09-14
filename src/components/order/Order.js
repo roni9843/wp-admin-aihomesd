@@ -4,7 +4,7 @@ export default function Order() {
   const [orders, setOrders] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:8000/getAllOrder") // Replace with your backend API URL
+    fetch("https://backend.aihomesd.com/getAllOrder") // Replace with your backend API URL
       .then((response) => response.json())
       .then((data) => {
         const sortedData = data.sort(

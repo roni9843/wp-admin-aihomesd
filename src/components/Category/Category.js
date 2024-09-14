@@ -8,7 +8,7 @@ export default function Category() {
 
   // Fetch all categories on component mount
   useEffect(() => {
-    fetch("http://localhost:8000/getAllCategory")
+    fetch("https://backend.aihomesd.com/getAllCategory")
       .then((response) => response.json())
       .then((data) => setCategories(data))
       .catch((error) => console.error("Error fetching categories:", error));
@@ -28,7 +28,7 @@ export default function Category() {
   const handleRemoveCategory = async (categoryId) => {
     try {
       const response = await fetch(
-        `http://localhost:8000/removeCategory/${categoryId}`,
+        `https://backend.aihomesd.com/removeCategory/${categoryId}`,
         {
           method: "DELETE",
         }
@@ -84,7 +84,7 @@ export default function Category() {
 
         // Add category with image URL to your database
         const categoryResponse = await fetch(
-          "http://localhost:8000/addCategory",
+          "https://backend.aihomesd.com/addCategory",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },

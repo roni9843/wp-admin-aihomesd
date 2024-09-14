@@ -6,7 +6,7 @@ export default function Email() {
   const [customerData, setCustomerData] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:8000/getAllEmail")
+    fetch("https://backend.aihomesd.com/getAllEmail")
       .then((response) => response.json())
       .then((data) => {
         // Sort the user data by 'createdAt' field in descending order

@@ -34,7 +34,7 @@ export default function EditProductPage() {
   }, [productId]);
 
   const callProduct = async (productId) => {
-    const url = "http://localhost:8000/getProductById";
+    const url = "https://backend.aihomesd.com/getProductById";
     const payload = { productId };
 
     try {
@@ -64,7 +64,7 @@ export default function EditProductPage() {
 
     try {
       const response = await fetch(
-        `http://localhost:8000/updateProduct/${productId}`,
+        `https://backend.aihomesd.com/updateProduct/${productId}`,
         {
           method: "POST",
           body: formData,

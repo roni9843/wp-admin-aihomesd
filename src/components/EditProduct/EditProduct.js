@@ -14,7 +14,7 @@ export default function ProductDashboard() {
     const fetchProducts = async () => {
       try {
         const response = await fetch(
-          "http://localhost:8000/getAllCategoryWithProducts"
+          "https://backend.aihomesd.com/getAllCategoryWithProducts"
         );
 
         if (!response.ok) {
@@ -72,7 +72,7 @@ export default function ProductDashboard() {
   const handleSaveProduct = async () => {
     try {
       const response = await fetch(
-        `http://localhost:8000/editProduct/${editingProduct._id}`,
+        `https://backend.aihomesd.com/editProduct/${editingProduct._id}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -142,7 +142,7 @@ export default function ProductDashboard() {
     if (userConfirmation && userConfirmation.toUpperCase() === "DELETE") {
       try {
         const response = await fetch(
-          `http://localhost:8000/deleteProduct/${product._id}`,
+          `https://backend.aihomesd.com/deleteProduct/${product._id}`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },

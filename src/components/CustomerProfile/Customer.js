@@ -5,7 +5,7 @@ export default function Customer() {
   const [customerData, setCustomerData] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:8000/getAllUser")
+    fetch("https://backend.aihomesd.com/getAllUser")
       .then((response) => response.json())
       .then((data) => {
         console.log("data -> ", data);
