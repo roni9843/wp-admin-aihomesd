@@ -1,421 +1,437 @@
 import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
-import React, { useEffect, useLayoutEffect, useState } from "react";
+import "bootstrap/dist/css/bootstrap.min.css";
+import React, { useEffect, useState } from "react";
 
 export default function EditProductPage() {
   const [productId, setProductId] = useState("");
-  const [productData, setProductData] = useState({});
-  const [allCategory, setAllCategory] = useState([]);
+  const [productData, setProductData] = useState({
+    productName: "",
+    productStock: 0,
+    productRegularPrice: 0,
+    productOffer: 0,
+    productTag: [],
+    productDescription: "",
+    shortDescription: "",
+    productYoutubeLink: "",
+    additionalInfo: "",
+    productTP: 0,
+    productMRP: 0,
+  });
 
-  useLayoutEffect(() => {
-    // Extract the productId from the URL path
+  const [errors, setErrors] = useState({});
+
+  useEffect(() => {
     const path = window.location.pathname;
     const id = path.split("productId=")[1];
-
     setProductId(id);
   }, []);
 
   useEffect(() => {
-    callProduct(productId);
-    callCategory();
+    if (productId) {
+      callProduct(productId);
+    }
   }, [productId]);
 
   const callProduct = async (productId) => {
-    const url = "https://elec-ecommerce-back.vercel.app/getProductById";
-    const payload = {
-      productId: productId,
-    };
+    const url = "http://localhost:8000/getProductById";
+    const payload = { productId };
 
     try {
       const response = await fetch(url, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
-
+      if (!response.ok) throw new Error("Network response was not ok");
       const data = await response.json();
-      console.log(data);
+      console.log("Product Data:", data); // Check the data here
       setProductData(data);
-      // Handle the fetched product data here
     } catch (error) {
       console.error("There was a problem with the fetch operation:", error);
     }
   };
 
-  const callCategory = async (productId) => {
-    const url = "https://elec-ecommerce-back.vercel.app/getAllCategory";
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validatePrices() || !validateFields()) return;
+
+    const formData = new FormData();
+    Object.keys(productData).forEach((key) => {
+      formData.append(key, productData[key]);
+    });
 
     try {
-      const response = await fetch(url);
+      const response = await fetch(
+        `http://localhost:8000/updateProduct/${productId}`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
 
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
+      if (response.ok) {
+        const data = await response.json();
+        alert("Product updated successfully!");
+      } else {
+        const errorData = await response.json();
+        alert(`Error: ${errorData.message || "An error occurred"}`);
       }
-
-      const data = await response.json();
-
-      setAllCategory(data);
-      // Handle the fetched product data here
     } catch (error) {
-      console.error("There was a problem with the fetch operation:", error);
+      console.error("Error saving product:", error);
+      alert("An error occurred while saving the product.");
     }
   };
 
-  const productDescriptionFunc = async (props) => {
-    if (Object.keys(productData).length !== 0) {
-      console.log("this is inside call ", productData);
-
-      setProductData({
-        ...productData,
-        productDescription: props,
-      });
+  const validatePrices = () => {
+    const { productRegularPrice, productOffer, productTP, productMRP } =
+      productData;
+    if (
+      productRegularPrice < 0 ||
+      productOffer < 0 ||
+      productTP < 0 ||
+      productMRP < 0
+    ) {
+      setErrors((prevErrors) => ({
+        ...prevErrors,
+        price: "Prices must be non-negative.",
+      }));
+      return false;
     }
+    return true;
+  };
+
+  const validateFields = () => {
+    const errors = {};
+    if (!productData.productName.trim())
+      errors.productName = "Product Name is required.";
+    if (productData.productRegularPrice <= 0)
+      errors.productRegularPrice =
+        "Regular Price is required and must be positive.";
+    setErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   return (
-    <div>
-      <div style={{ padding: "20px" }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <div
-            style={{
-              padding: "20px",
-              backgroundColor: "#f8f9fa",
-              borderRadius: "8px",
-              boxShadow: "0 0 10px rgba(0, 0, 0, 0.1)",
-              marginBottom: "20px",
-              width: "900px",
-            }}
-          >
-            <form>
-              <div className="row">
-                <div className="col-8">
-                  <div className="form-group">
-                    <label htmlFor="productName">Product Name</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      id="productName"
-                      name="productName"
-                      value={productData.productName}
-                      onChange={
-                        (e) =>
-                          setProductData({
-                            ...productData,
-                            [e.target.name]: e.target.value,
-                          })
+    <div
+      className="container mt-4"
+      style={{
+        maxWidth: "900px",
 
-                        // setProductData({
-                        //   ...productData,
-                        //   productData["images"] : [...productData["images"],[e.target.name]: e.target.value],
+        borderRadius: "8px",
+        padding: "20px",
+      }}
+    >
+      <form
+        style={{
+          padding: "20px",
+          backgroundColor: "#f8f9fa",
+          borderRadius: "8px",
+          boxShadow: "0 0 10px rgba(0, 0, 0, 0.1)",
+          marginBottom: "20px",
+          width: "1000px",
+        }}
+        onSubmit={handleSubmit}
+      >
+        <table className="table table-hover table-bordered    table-striped ">
+          <thead className="table-primary ">
+            <tr>
+              <th
+                style={{
+                  //  backgroundColor: "#4caf50",
+                  //  color: "#fff",
+                  textAlign: "center",
+                  padding: "10px",
+                }}
+                colSpan="2"
+              >
+                Update Product Information
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {/* Row for Product Name */}
+            <tr>
+              <td style={{ width: "30%", fontWeight: "bold", padding: "15px" }}>
+                Product Name
+              </td>
+              <td>
+                <input
+                  type="text"
+                  className={`form-control ${
+                    errors.productName ? "is-invalid" : ""
+                  }`}
+                  id="productName"
+                  value={productData.productName}
+                  onChange={(e) =>
+                    setProductData({
+                      ...productData,
+                      productName: e.target.value,
+                    })
+                  }
+                  style={{ border: "2px solid #4caf50" }}
+                />
+                {errors.productName && (
+                  <div className="invalid-feedback">{errors.productName}</div>
+                )}
+              </td>
+            </tr>
 
-                        // })
+            {/* Row for Product Stock */}
+            <tr style={{ backgroundColor: "#e8f5e9" }}>
+              <td style={{ width: "30%", fontWeight: "bold", padding: "15px" }}>
+                Product Stock
+              </td>
+              <td>
+                <input
+                  type="number"
+                  className="form-control"
+                  id="productStock"
+                  value={productData.productStock}
+                  onChange={(e) =>
+                    setProductData({
+                      ...productData,
+                      productStock: parseInt(e.target.value),
+                    })
+                  }
+                  style={{ border: "2px solid #4caf50" }}
+                />
+              </td>
+            </tr>
 
-                        // setProductData({
-                        //   ...productData["images"],
-                        //   [Object.keys(productData["images"]).length]:
-                        //     e.target.value,
-                        // })
-
-                        // setProductData({
-                        //   ...productData,
-                        //   images: [...productData.images, "hellow"],
-                        // })
-
-                        // console.log(typeof productData["images"])
-                      }
-                      style={{
-                        borderRadius: "5px",
-                        borderColor: "#ced4da",
-                        marginBottom: "10px",
-                        padding: "10px",
-                        width: "100%",
-                      }}
-                    />
+            {/* Row for Regular Price */}
+            <tr>
+              <td style={{ fontWeight: "bold", padding: "15px" }}>
+                Regular Price
+              </td>
+              <td>
+                <input
+                  type="number"
+                  className={`form-control ${
+                    errors.productRegularPrice ? "is-invalid" : ""
+                  }`}
+                  id="productRegularPrice"
+                  value={productData.productRegularPrice}
+                  onChange={(e) =>
+                    setProductData({
+                      ...productData,
+                      productRegularPrice: parseFloat(e.target.value),
+                    })
+                  }
+                  style={{ border: "2px solid #4caf50" }}
+                />
+                {errors.productRegularPrice && (
+                  <div className="invalid-feedback">
+                    {errors.productRegularPrice}
                   </div>
-                </div>
-                <div className="col-4">
-                  <div className="form-group">
-                    <label htmlFor="productCategory">Product Category</label>
-                    <select
-                      className="form-control"
-                      id="productCategory"
-                      //   value={productData && productData.category.category}
-                      // onChange={(e) =>
-                      // setProductData({
-                      //   ...productData,
-                      //   category: e.target.value,
-                      // })
-                      // }
-                      value={productData && productData?.category?.category}
-                      onChange={(e) => {
-                        let targetCategory = allCategory.filter(
-                          (c) => c.category === e.target.value
-                        );
+                )}
+              </td>
+            </tr>
 
-                        console.log("this is category", targetCategory[0]);
+            {/* Row for Offer Price */}
+            <tr style={{ backgroundColor: "#e8f5e9" }}>
+              <td style={{ fontWeight: "bold", padding: "15px" }}>
+                Offer Price
+              </td>
+              <td>
+                <input
+                  type="number"
+                  className="form-control"
+                  id="productOffer"
+                  value={productData.productOffer}
+                  onChange={(e) =>
+                    setProductData({
+                      ...productData,
+                      productOffer: parseFloat(e.target.value),
+                    })
+                  }
+                  style={{ border: "2px solid #4caf50" }}
+                />
+                {productData?.productOffer
+                  ? `${productData.productOffer}% off - 
+                    ৳${(
+                      productData.productRegularPrice -
+                      (productData.productRegularPrice *
+                        productData.productOffer) /
+                        100
+                    ).toFixed(2)}`
+                  : `৳${productData?.productRegularPrice.toFixed(2)}`}
+              </td>
+            </tr>
 
-                        setProductData((prevData) => ({
-                          ...prevData,
-                          category: {
-                            ...targetCategory[0],
-                          },
-                        }));
-                      }}
-                      style={{
-                        borderRadius: "5px",
-                        borderColor: "#ced4da",
-                        marginBottom: "10px",
-                        padding: "10px",
-                        width: "100%",
-                      }}
-                    >
-                      {allCategory &&
-                        allCategory.map((c) => (
-                          <option key={c.category} value={c.category}>
-                            {c.category}
-                          </option>
-                        ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ display: "flex", gap: "20px" }}>
-                <div className="form-group" style={{ flex: 1 }}>
-                  <label htmlFor="productStock">Product Stock</label>
-                  <input
-                    type="number"
-                    className="form-control"
-                    id="productStock"
-                    value={productData.productStock}
-                    onChange={(e) => setProductData(e.target.value)}
-                    style={{
-                      borderRadius: "5px",
-                      borderColor: "#ced4da",
-                      marginBottom: "10px",
-                      padding: "10px",
-                      width: "100%",
-                    }}
-                  />
-                </div>
-
-                <div className="form-group" style={{ flex: 1 }}>
-                  <label htmlFor="productTags">Product Tags ( , )</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    id="productTags"
-                    value={productData?.productTag?.join(", ")}
-                    onChange={(e) => {
-                      const tagsArray = e.target.value
+            {/* Row for Product Tags */}
+            <tr>
+              <td style={{ fontWeight: "bold", padding: "15px" }}>
+                Product Tags
+              </td>
+              <td>
+                <input
+                  type="text"
+                  className="form-control"
+                  id="productTag"
+                  value={productData.productTag.join(", ")}
+                  onChange={(e) =>
+                    setProductData({
+                      ...productData,
+                      productTag: e.target.value
                         .split(",")
-                        .map((tag) => tag.trim());
-                      setProductData({
-                        ...productData,
-                        productTag: tagsArray,
-                      });
-                    }}
-                    style={{
-                      borderRadius: "5px",
-                      borderColor: "#ced4da",
-                      marginBottom: "10px",
-                      padding: "10px",
-                      width: "100%",
-                    }}
-                  />
-                </div>
+                        .map((tag) => tag.trim()),
+                    })
+                  }
+                  style={{ border: "2px solid #4caf50" }}
+                />
+              </td>
+            </tr>
 
-                <div className="form-group" style={{ flex: 1 }}>
-                  <label>Product Live</label>
-                  <select
-                    className="form-control"
-                    value={productData.productLive}
-                    onChange={(e) => {
-                      setProductData({
-                        ...productData,
-                        productLive: e.target.value === "true" ? true : false,
-                      });
-                    }}
-                    style={{
-                      borderRadius: "5px",
-                      borderColor: "#ced4da",
-                      marginBottom: "10px",
-                      padding: "10px",
-                      width: "100%",
-                    }}
-                  >
-                    <option value="">Select an option</option>
-                    <option value={true}>Yes</option>
-                    <option value={false}>No</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="productDescription">Product Description</label>
+            {/* Row for Product Description */}
+            <tr style={{ backgroundColor: "#e8f5e9" }}>
+              <td style={{ fontWeight: "bold", padding: "15px" }}>
+                Product Description
+              </td>
+              <td>
                 <CKEditor
                   editor={ClassicEditor}
                   data={productData.productDescription}
-                  onChange={async (event, editor) => {
-                    const data = editor.getData();
-
-                    productDescriptionFunc(data);
-                  }}
-                  style={{
-                    borderRadius: "5px",
-                    borderColor: "#ced4da",
-                    marginBottom: "10px",
-                    padding: "10px",
-                    width: "100%",
-                  }}
+                  onChange={(event, editor) =>
+                    setProductData({
+                      ...productData,
+                      productDescription: editor.getData(),
+                    })
+                  }
                 />
-              </div>
+              </td>
+            </tr>
 
-              <div className="form-group">
-                <label>Product Images</label>
+            {/* Row for Short Description */}
+            <tr>
+              <td style={{ fontWeight: "bold", padding: "15px" }}>
+                Short Description
+              </td>
+              <td>
+                <input
+                  type="text"
+                  className="form-control"
+                  id="shortDescription"
+                  value={productData.shortDescription}
+                  onChange={(e) =>
+                    setProductData({
+                      ...productData,
+                      shortDescription: e.target.value,
+                    })
+                  }
+                  style={{ border: "2px solid #4caf50" }}
+                />
+              </td>
+            </tr>
+
+            {/* Row for YouTube Link */}
+            <tr style={{ backgroundColor: "#e8f5e9" }}>
+              <td style={{ fontWeight: "bold", padding: "15px" }}>
+                YouTube Link
+              </td>
+              <td>
+                <input
+                  type="text"
+                  className="form-control"
+                  id="productYoutubeLink"
+                  value={productData.productYoutubeLink}
+                  onChange={(e) =>
+                    setProductData({
+                      ...productData,
+                      productYoutubeLink: e.target.value,
+                    })
+                  }
+                  style={{ border: "2px solid #4caf50" }}
+                />
+              </td>
+            </tr>
+
+            {/* Row for Additional Information */}
+            <tr>
+              <td style={{ fontWeight: "bold", padding: "15px" }}>
+                Additional Information
+              </td>
+              <td>
+                <CKEditor
+                  editor={ClassicEditor}
+                  data={productData.additionalInfo}
+                  onChange={(event, editor) =>
+                    setProductData({
+                      ...productData,
+                      additionalInfo: editor.getData(),
+                    })
+                  }
+                />
+              </td>
+            </tr>
+
+            {/* Row for Product TP */}
+            <tr style={{ backgroundColor: "#e8f5e9" }}>
+              <td style={{ fontWeight: "bold", padding: "15px" }}>
+                Product TP
+              </td>
+              <td>
+                <input
+                  type="number"
+                  className="form-control"
+                  id="productTP"
+                  value={productData.productTP}
+                  onChange={(e) =>
+                    setProductData({
+                      ...productData,
+                      productTP: parseFloat(e.target.value),
+                    })
+                  }
+                  style={{ border: "2px solid #4caf50" }}
+                />
+              </td>
+            </tr>
+
+            {/* Row for Product MRP */}
+            <tr>
+              <td style={{ fontWeight: "bold", padding: "15px" }}>
+                Product MRP
+              </td>
+              <td>
+                <input
+                  type="number"
+                  className="form-control"
+                  id="productMRP"
+                  value={productData.productMRP}
+                  onChange={(e) =>
+                    setProductData({
+                      ...productData,
+                      productMRP: parseFloat(e.target.value),
+                    })
+                  }
+                  style={{ border: "2px solid #4caf50" }}
+                />
+              </td>
+            </tr>
+
+            {/* Submit Button */}
+            <tr>
+              <td colSpan="2" className="text-center">
                 <button
-                  type="button"
-                  className="btn btn-primary"
-                  // onClick={handleChooseFile}
+                  type="submit"
+                  className="btn btn-success px-5 py-2 mt-4"
                   style={{
-                    borderRadius: "5px",
-                    borderColor: "#ced4da",
-                    marginBottom: "10px",
-                    padding: "10px",
-                    width: "100%",
+                    backgroundColor: "#4caf50",
+                    border: "none",
+                    color: "#fff",
+                    fontWeight: "bold",
+                    fontSize: "16px",
+                    letterSpacing: "1px",
                   }}
                 >
-                  Choose Files
+                  Update Product
                 </button>
-                <input
-                  type="file"
-                  multiple
-                  style={{ display: "none" }}
-                  // ref={fileInputRef}
-                  //  onChange={handleFileInputChange}
-                />
-                <div
-                  style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}
-                ></div>
-              </div>
-
-              <div style={{ display: "flex", gap: "20px" }}>
-                <div className="form-group" style={{ flex: 1 }}>
-                  <label htmlFor="productCode">Product Code</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    //   id="productCode"
-                    //   value={productCode}
-                    //   onChange={(e) => setProductCode(e.target.value)}
-                    style={{
-                      borderRadius: "5px",
-                      borderColor: "#ced4da",
-                      marginBottom: "10px",
-                      padding: "10px",
-                      width: "100%",
-                    }}
-                  />
-                </div>
-
-                <div className="form-group" style={{ flex: 1 }}>
-                  <label htmlFor="productTP">Product TP</label>
-                  <input
-                    type="number"
-                    className="form-control"
-                    id="productTP"
-                    //   value={productTP}
-                    //   onChange={(e) => setProductTP(e.target.value)}
-                    style={{
-                      borderRadius: "5px",
-                      borderColor: "#ced4da",
-                      marginBottom: "10px",
-                      padding: "10px",
-                      width: "100%",
-                    }}
-                  />
-                </div>
-
-                <div className="form-group" style={{ flex: 1 }}>
-                  <label htmlFor="mrp">Product MRP</label>
-                  <input
-                    type="number"
-                    className="form-control"
-                    id="mrp"
-                    //   value={mrp}
-                    //   onChange={(e) => setMrp(e.target.value)}
-                    style={{
-                      borderRadius: "5px",
-                      borderColor: "#ced4da",
-                      marginBottom: "10px",
-                      padding: "10px",
-                      width: "100%",
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div style={{ display: "flex", gap: "20px" }}>
-                <div className="form-group" style={{ flex: 1 }}>
-                  <label htmlFor="regularPrice">Regular Price</label>
-                  <input
-                    type="number"
-                    className="form-control"
-                    id="regularPrice"
-                    //   value={regularPrice}
-                    //   onChange={(e) => setRegularPrice(e.target.value)}
-                    style={{
-                      borderRadius: "5px",
-                      borderColor: "#ced4da",
-                      marginBottom: "10px",
-                      padding: "10px",
-                      width: "100%",
-                    }}
-                  />
-                </div>
-
-                <div className="form-group" style={{ flex: 1 }}>
-                  <label htmlFor="offerPrice">Offer Price</label>
-                  <input
-                    type="number"
-                    className="form-control"
-                    id="offerPrice"
-                    // value={offerPrice}
-                    //    onChange={(e) => setOfferPrice(e.target.value)}
-                    style={{
-                      borderRadius: "5px",
-                      borderColor: "#ced4da",
-                      marginBottom: "10px",
-                      padding: "10px",
-                      width: "100%",
-                    }}
-                  />
-                </div>
-              </div>
-            </form>
-
-            <div
-              className="alert alert-success"
-              role="alert"
-              style={{ marginBottom: "20px" }}
-            >
-              Lorem ipsum dolor sit amet consectetur adipisicing elit. Ab, at?
-            </div>
-          </div>
-        </div>
-      </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </form>
     </div>
   );
 }

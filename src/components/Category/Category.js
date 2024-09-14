@@ -2,83 +2,29 @@ import React, { useEffect, useState } from "react";
 
 export default function Category() {
   const [category, setCategory] = useState("");
-  const [imageFile, setImageFile] = useState(null); // New state for image file
+  const [imageFile, setImageFile] = useState(null); // State for image file
   const [categories, setCategories] = useState([]);
   const [message, setMessage] = useState("");
 
-  // use
+  // Fetch all categories on component mount
   useEffect(() => {
-    fetch("https://elec-ecommerce-back.vercel.app/getAllCategory")
+    fetch("http://localhost:8000/getAllCategory")
       .then((response) => response.json())
       .then((data) => setCategories(data))
       .catch((error) => console.error("Error fetching categories:", error));
   }, []);
 
+  // Handle category name change
   const handleCategoryChange = (e) => {
     setCategory(e.target.value);
   };
 
+  // Handle image file selection
   const handleImageChange = (e) => {
     setImageFile(e.target.files[0]);
   };
 
-  const handleAddCategory = async (e) => {
-    e.preventDefault(); // Prevent default form submission
-    if (category.trim() && imageFile) {
-      try {
-        // Upload image to ImgBB
-        const formData = new FormData();
-        formData.append("image", imageFile);
-
-        const response = await fetch(
-          "https://api.imgbb.com/1/upload?key=b7424c6aa6bf3ab8f5c2a405e70531a2",
-          {
-            method: "POST",
-            body: formData,
-          }
-        );
-
-        const data = await response.json();
-        if (!data.success) {
-          console.error("Image upload failed");
-          return;
-        }
-
-        const imageUrl = data.data.url;
-
-        // Add category with image URL to your database
-        const categoryResponse = await fetch(
-          "http://localhost:8000/addCategory",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              category,
-              image: imageUrl,
-            }),
-          }
-        );
-
-        if (!categoryResponse.ok) {
-          throw new Error("Failed to add category");
-        }
-
-        const responseData = await categoryResponse.json();
-        const newCategory = responseData.getCategories; // Assuming backend sends the updated list of categories in response
-
-        setCategories(newCategory);
-        setCategory(""); // Clear input field after adding category
-        setImageFile(null); // Clear image file after adding category
-        setMessage("Category added successfully");
-      } catch (error) {
-        console.error("Error adding category:", error);
-        setMessage("Error adding category");
-      }
-    } else {
-      setMessage("Please fill in the category name and select an image.");
-    }
-  };
-
+  // Remove a category
   const handleRemoveCategory = async (categoryId) => {
     try {
       const response = await fetch(
@@ -100,13 +46,78 @@ export default function Category() {
       setMessage("Category deleted successfully");
     } catch (error) {
       console.error("Error removing category:", error);
-      setMessage(error.message || "Error removing category");
+      setMessage(
+        "An error occurred while removing the category. Please try again."
+      );
+    }
+  };
+
+  // Add a new category
+  const handleAddCategory = async (e) => {
+    e.preventDefault(); // Prevent default form submission
+
+    if (category.trim()) {
+      try {
+        let imageUrl = ""; // Default to empty string if no image
+
+        if (imageFile) {
+          // Upload image to ImgBB
+          const formData = new FormData();
+          formData.append("image", imageFile);
+
+          const response = await fetch(
+            "https://api.imgbb.com/1/upload?key=b7424c6aa6bf3ab8f5c2a405e70531a2",
+            {
+              method: "POST",
+              body: formData,
+            }
+          );
+
+          const data = await response.json();
+          if (!data.success) {
+            console.error("Image upload failed");
+            return;
+          }
+
+          imageUrl = data.data.url;
+        }
+
+        // Add category with image URL to your database
+        const categoryResponse = await fetch(
+          "http://localhost:8000/addCategory",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              category,
+              image: imageUrl, // Pass image URL if available
+            }),
+          }
+        );
+
+        if (!categoryResponse.ok) {
+          throw new Error("Failed to add category");
+        }
+
+        const responseData = await categoryResponse.json();
+        const newCategory = responseData.getCategories; // Assuming backend sends the updated list of categories in response
+
+        setCategories(newCategory);
+        setCategory(""); // Clear input field after adding category
+        setImageFile(null); // Clear image file after adding category
+        setMessage("Category added successfully");
+      } catch (error) {
+        console.error("Error adding category:", error);
+        setMessage("Error adding category");
+      }
+    } else {
+      setMessage("Please fill in the category name.");
     }
   };
 
   return (
     <div className="container-fluid vh-100 d-flex flex-column">
-      {/* Display any success or error messages (optional) */}
+      {/* Display any success or error messages */}
       {message && <div className="alert alert-info">{message}</div>}
 
       <main className="row flex-grow-1 overflow-auto py-4">
@@ -115,7 +126,7 @@ export default function Category() {
             <div className="card-header">Add Category</div>
             <div className="card-body">
               <form onSubmit={handleAddCategory}>
-                {/* Category input field with validation (implement using JavaScript) */}
+                {/* Category input field */}
                 <div className="mb-3">
                   <label htmlFor="categoryInput" className="form-label">
                     Category Name
@@ -167,11 +178,15 @@ export default function Category() {
                   <div>
                     <strong>{cat.category}</strong>
                     <br />
-                    <img
-                      src={cat.image}
-                      alt={cat.category}
-                      style={{ maxWidth: "50px" }}
-                    />
+                    {cat.image ? (
+                      <img
+                        src={cat.image}
+                        alt={cat.category}
+                        style={{ maxWidth: "50px" }}
+                      />
+                    ) : (
+                      <span>No image</span>
+                    )}
                   </div>
                   <button
                     type="button"

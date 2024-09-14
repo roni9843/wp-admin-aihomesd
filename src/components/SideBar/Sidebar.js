@@ -4,8 +4,10 @@ import {
   faChartBar,
   faDiamond,
   faGlobe,
+  faReorder,
   faShoppingCart,
   faTint,
+  faUser,
   faWrench,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -13,11 +15,15 @@ import React, { useEffect, useLayoutEffect, useState } from "react";
 import { Menu, MenuItem, Sidebar, SubMenu } from "react-pro-sidebar";
 import Category from "../Category/Category";
 import Crop from "../Crop/Crop";
+import Customer from "../CustomerProfile/Customer";
 import EditProduct from "../EditProduct/EditProduct";
 import EditProductPage from "../EditProduct/EditProductPage";
+import Email from "../Email/Email";
 import Order from "../order/Order";
 import SingleOrder from "../order/SingleOrder";
+import PerformanceBoard from "../PerformanceBoard/PerformanceBoard";
 import Product from "../Product/Product";
+import Tools from "../Tools/Tools";
 import "./SidebarStyle.css";
 
 const sidebarClasses = {
@@ -102,12 +108,26 @@ const Switch = ({ id, checked, onChange, label }) => (
 );
 
 const SidebarHeader = ({ rtl, style }) => (
-  <div style={style}>Ecommers Dashboard</div>
+  <div style={style}>Aihomesd Dashboard</div>
 );
 
 const SidebarFooter = ({ collapsed }) => (
   <div style={{ textAlign: "center", padding: "10px 0", color: "#8ba1b7" }}>
-    Footer Content {collapsed ? "(collapsed)" : ""}
+    <p
+      style={{
+        margin: 0,
+        color: "white",
+      }}
+    >
+      Developed by{" "}
+      <a
+        href="https://araflogix.com/"
+        style={{ color: "white", textDecoration: "none" }}
+      >
+        ArafLogix.com
+      </a>
+    </p>
+    {collapsed ? "(collapsed)" : ""}
   </div>
 );
 
@@ -179,7 +199,7 @@ export const Playground = () => {
     const parts = props.split("/");
 
     // Construct the new URL
-    const newUrl = `${window.location.origin}/elec-ecommerce-dashboard/${props}`;
+    const newUrl = `${window.location.origin}/dashboard/${props}`;
 
     if (parts.length > 1) {
       setMainMenu(parts[0]);
@@ -207,6 +227,18 @@ export const Playground = () => {
       setNestedMenu(parts[4].split("=")[0]);
     }
   }, []);
+
+  const currentDate = new Date();
+  const dateString = currentDate.toLocaleDateString("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  const timeString = currentDate.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
   const [orders, setOrders] = useState([]);
 
@@ -271,6 +303,7 @@ export const Playground = () => {
           >
             Dashboard
           </SidebarHeader>
+
           <div style={{ flex: 1, marginBottom: "32px" }}>
             <div style={{ padding: "0 24px", marginBottom: "8px" }}>
               <Typography
@@ -287,8 +320,15 @@ export const Playground = () => {
             </div>
             <Menu menuItemStyles={menuItemStyles}>
               <MenuItem
+                onClick={() => setActiveOption("board/performance-board")}
+                icon={<FontAwesomeIcon icon={faChartBar} />}
+                // suffix={<Badge variant="success">{orders?.length}</Badge>}
+              >
+                Dashboard
+              </MenuItem>
+              <MenuItem
                 onClick={() => setActiveOption("order/order-list")}
-                icon={<FontAwesomeIcon icon={faCalendar} />}
+                icon={<FontAwesomeIcon icon={faReorder} />}
                 suffix={<Badge variant="success">{orders?.length}</Badge>}
               >
                 Order
@@ -321,28 +361,52 @@ export const Playground = () => {
                 </MenuItem>
               </SubMenu>
 
+              <MenuItem
+                onClick={() => setActiveOption("user/register-customer")}
+                icon={<FontAwesomeIcon icon={faUser} />}
+                // suffix={<Badge variant="success">{orders?.length}</Badge>}
+              >
+                Customer
+              </MenuItem>
+              <MenuItem
+                onClick={() => setActiveOption("message/email")}
+                icon={<FontAwesomeIcon icon={faUser} />}
+                suffix={<Badge variant="success">{orders?.length}</Badge>}
+              >
+                Email
+              </MenuItem>
               <SubMenu
+                style={{ display: "none" }}
                 label="Charts"
                 icon={<FontAwesomeIcon icon={faChartBar} />}
-                suffix={
-                  <Badge variant="danger" shape="circle">
-                    6
-                  </Badge>
-                }
+                // suffix={
+                //   <Badge variant="danger" shape="circle">
+                //     6
+                //   </Badge>
+                // }
               >
                 <MenuItem> Pie charts</MenuItem>
                 <MenuItem> Line charts</MenuItem>
                 <MenuItem> Bar charts</MenuItem>
               </SubMenu>
-              <SubMenu label="Maps" icon={<FontAwesomeIcon icon={faGlobe} />}>
+              <SubMenu
+                style={{ display: "none" }}
+                label="Maps"
+                icon={<FontAwesomeIcon icon={faGlobe} />}
+              >
                 <MenuItem> Google maps</MenuItem>
                 <MenuItem> Open street maps</MenuItem>
               </SubMenu>
-              <SubMenu label="Theme" icon={<FontAwesomeIcon icon={faTint} />}>
+              <SubMenu
+                style={{ display: "none" }}
+                label="Theme"
+                icon={<FontAwesomeIcon icon={faTint} />}
+              >
                 <MenuItem> Dark</MenuItem>
                 <MenuItem> Light</MenuItem>
               </SubMenu>
               <SubMenu
+                style={{ display: "none" }}
                 label="Components"
                 icon={<FontAwesomeIcon icon={faDiamond} />}
               >
@@ -358,6 +422,7 @@ export const Playground = () => {
                 </SubMenu>
               </SubMenu>
               <SubMenu
+                style={{ display: "none" }}
                 label="E-commerce"
                 icon={<FontAwesomeIcon icon={faShoppingCart} />}
               >
@@ -396,18 +461,19 @@ export const Playground = () => {
             <Menu menuItemStyles={menuItemStyles}>
               <MenuItem
                 icon={<FontAwesomeIcon icon={faCalendar} />}
-                suffix={<Badge variant="success">New</Badge>}
-                onClick={() => setActiveOption("Calendar")}
+                onClick={() => setActiveOption("tool/Tools")}
               >
-                Calendar
+                Tools
               </MenuItem>
               <MenuItem
+                style={{ display: "none" }}
                 icon={<FontAwesomeIcon icon={faBook} />}
                 onClick={() => setActiveOption("Documentation")}
               >
                 Documentation
               </MenuItem>
               <MenuItem
+                style={{ display: "none" }}
                 icon={<FontAwesomeIcon icon={faWrench} />}
                 onClick={() => setActiveOption("Settings")}
               >
@@ -420,6 +486,7 @@ export const Playground = () => {
       </Sidebar>
 
       <div style={{ overflowY: "scroll", width: "100%", overflowX: "hidden" }}>
+        {/* Toggle Button */}
         {broken && (
           <button
             className="sb-button"
@@ -436,6 +503,7 @@ export const Playground = () => {
             Toggle
           </button>
         )}
+
         <div
           className="topbar"
           style={{
@@ -451,29 +519,54 @@ export const Playground = () => {
             top: "0",
             zIndex: "1000",
             boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+            // Adding media query styles directly in JSX for demonstration
           }}
         >
-          <button
-            className="sb-button"
-            onClick={() => setToggled(!toggled)}
+          {/* SubMenu (Visible on all screen sizes) */}
+          <div style={{ flex: 1, textAlign: "left" }}>
+            {subMenu === ""
+              ? "Dashboard"
+              : subMenu === "performance-board"
+              ? "Dashboard"
+              : subMenu === "order-list"
+              ? "Order"
+              : subMenu === "product-add"
+              ? "Upload Product"
+              : subMenu === "product-edit"
+              ? "Edit Product"
+              : subMenu === "product-category"
+              ? "Upload Category"
+              : subMenu === "register-customer"
+              ? "Register Customer"
+              : "Dashboard"}
+          </div>
+
+          {/* Date and Time (Hidden on small screens) */}
+          <div
             style={{
-              backgroundColor: theme === "dark" ? "#1abc9c" : "#ff6f61",
-              color: "#fff",
-              border: "none",
-              padding: "8px 16px",
-              borderRadius: "4px",
-              cursor: "pointer",
+              flex: 2,
+              textAlign: "center",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              // Responsive styles
+              "@media (max-width: 768px)": {
+                display: "none",
+              },
             }}
           >
-            Toggle
-          </button>
+            {dateString} | {timeString}
+          </div>
         </div>
 
-        <div className="mt-5 ">
+        {/* Main Content Area */}
+        <div className="mt-5">
+          {" "}
+          {/* Added paddingTop to account for fixed topbar */}
           {mainMenu === "product" && (
             <div>
               {nestedMenu === "productId" ? (
-                <EditProductPage></EditProductPage>
+                <EditProductPage />
               ) : (
                 <div>
                   {subMenu === "product-add" && <Product />}
@@ -487,12 +580,17 @@ export const Playground = () => {
           {mainMenu === "order" && (
             <div>
               {nestedMenu === "orderId" ? (
-                <SingleOrder></SingleOrder>
+                <SingleOrder />
               ) : (
                 <div>{subMenu === "order-list" && <Order />}</div>
               )}
             </div>
           )}
+          {mainMenu === "" && <PerformanceBoard />}
+          {subMenu === "performance-board" && <PerformanceBoard />}
+          {subMenu === "register-customer" && <Customer />}
+          {subMenu === "Tools" && <Tools />}
+          {subMenu === "email" && <Email />}
         </div>
       </div>
     </div>
@@ -515,5 +613,5 @@ export const Playground = () => {
  *        {activeOption === "Product" && <Product />}
           {activeOption === "EditProduct" && <EditProduct />}
           {activeOption === "crop" && <Crop />}
-          {activeOption === "category" && <Category />}
+          {activeOption === "category" && <Tools />}
  */

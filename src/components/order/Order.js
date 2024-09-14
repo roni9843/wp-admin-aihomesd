@@ -202,7 +202,7 @@ export default function Order() {
                         }}
                         onClick={() =>
                           window.open(
-                            `${window.location.origin}/elec-ecommerce-dashboard/order/order-list/orderId=${order._id}`,
+                            `${window.location.origin}/dashboard/order/order-list/orderId=${order._id}`,
                             "_blank"
                           )
                         }

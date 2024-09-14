@@ -22,6 +22,29 @@ export default function Product() {
   const [mrp, setMrp] = useState("");
   const fileInputRef = useRef(null);
   const [successMessage, setSuccessMessage] = useState("");
+  const [shortDescription, setShortDescription] = useState("");
+  const [productYoutubeLink, setProductYoutubeLink] = useState("");
+  const [additionalInfo, setAdditionalInfo] = useState("");
+  const [pdfFileName, setPdfFileName] = useState("");
+  const pdfInputRef = useRef(null);
+  const [pdfFile, setPdfFile] = useState(null);
+
+  const [discountedPrice, setDiscountedPrice] = useState("");
+
+  useEffect(() => {
+    if (regularPrice && offerPrice) {
+      const regPrice = parseFloat(regularPrice);
+      const offerPercentage = parseFloat(offerPrice);
+
+      // Calculate the discounted price
+      const discountAmount = (regPrice * offerPercentage) / 100;
+      const calculatedDiscountedPrice = regPrice - discountAmount;
+
+      setDiscountedPrice(calculatedDiscountedPrice.toFixed(2));
+    } else {
+      setDiscountedPrice("");
+    }
+  }, [regularPrice, offerPrice]);
 
   useEffect(() => {
     // Fetch categories when the component mounts
@@ -88,14 +111,138 @@ export default function Product() {
     setImagePreviewUrls([...imagePreviewUrls, ...newImagePreviewUrls]);
   };
 
+  // const handleSubmit = async (event) => {
+  //   event.preventDefault();
+
+  //   // Validation for prices
+  //   if (!regularPrice || Number(regularPrice) <= 0) {
+  //     alert("Please enter a valid regular price.");
+  //     return;
+  //   }
+
+  //   const uploadedImageUrls = [];
+
+  //   for (let i = 0; i < pendingImages.length; i++) {
+  //     const url = await handleImageUpload(pendingImages[i]);
+  //     if (url) {
+  //       uploadedImageUrls.push(url);
+  //       setProductImages((prev) => [...prev, url]);
+  //     }
+  //   }
+
+  //   setPendingImages([]);
+  //   setImagePreviewUrls([]);
+
+  //   const productData = {
+  //     productName,
+  //     productStock,
+  //     productDescription,
+  //     productRegularPrice: regularPrice,
+  //     productOffer: offerPrice,
+  //     productTag: productTags.split(",").map((tag) => tag.trim()),
+  //     images: uploadedImageUrls,
+  //     productLive: productLive === "yes",
+  //     category: selectedCategory, // Ensure the field name matches the backend
+  //     productCode,
+  //     productTP,
+  //     productMRP: mrp,
+  //   };
+
+  //   try {
+  //     const response = await fetch("http://localhost:8000/postProduct", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify(productData),
+  //     });
+
+  //     if (response.ok) {
+  //       const data = await response.json();
+
+  //       setSuccessMessage("Product created successfully!");
+
+  //       alert("Product created successfully!");
+  //       // Clear the form fields after successful submission
+  //       setProductName("");
+  //       setProductStock("");
+  //       setProductDescription("");
+  //       setProductTags("");
+  //       setProductImages([]);
+  //       setPendingImages([]);
+  //       setImagePreviewUrls([]);
+  //       setProductLive("");
+  //       setSelectedCategory("");
+  //       setRegularPrice("");
+  //       setOfferPrice("");
+  //       setProductCode("");
+  //       setProductTP("");
+  //       setMrp("");
+  //     } else {
+  //       const errorData = await response.json();
+  //       alert(`Error: ${errorData.error}`);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error saving product:", error);
+  //     alert("An error occurred while saving the product.");
+  //   }
+  // };
+
+  const removeImage = (index) => {
+    const updatedPendingImages = pendingImages.filter((_, i) => i !== index);
+    setPendingImages(updatedPendingImages);
+
+    const updatedImagePreviewUrls = imagePreviewUrls.filter(
+      (_, i) => i !== index
+    );
+    setImagePreviewUrls(updatedImagePreviewUrls);
+  };
+
+  // Function to validate if offerPrice is less than or equal to regularPrice
+  const validatePrices = () => {
+    if (offerPrice && Number(offerPrice) > Number(regularPrice)) {
+      alert("Offer price should not be greater than the regular price.");
+      return false;
+    }
+    return true;
+  };
+
+  // Function to clear the form fields after successful submission
+  const clearFormFields = () => {
+    setProductName("");
+    setProductStock("");
+    setProductDescription("");
+    setProductTags("");
+    setProductImages([]);
+    setPendingImages([]);
+    setImagePreviewUrls([]);
+    setProductLive("");
+    setSelectedCategory("");
+    setRegularPrice("");
+    setOfferPrice("");
+    setProductCode("");
+    setProductTP("");
+    setMrp("");
+  };
+
+  // Function to handle image removal with confirmation
+  const handleRemoveImage = (index) => {
+    if (window.confirm("Are you sure you want to remove this image?")) {
+      removeImage(index);
+    }
+  };
+
+  // Function to toggle the live status of the product
+  const toggleProductLive = () => {
+    setProductLive((prev) => (prev === "yes" ? "no" : "yes"));
+  };
+
+  // Enhance the handleSubmit function with the new validation and clearing functions
   const handleSubmit = async (event) => {
     event.preventDefault();
 
     // Validation for prices
-    if (!regularPrice || Number(regularPrice) <= 0) {
-      alert("Please enter a valid regular price.");
-      return;
-    }
+    if (!validatePrices()) return;
 
     const uploadedImageUrls = [];
 
@@ -110,51 +257,45 @@ export default function Product() {
     setPendingImages([]);
     setImagePreviewUrls([]);
 
+    // Create a product data object instead of FormData
     const productData = {
       productName,
       productStock,
       productDescription,
       productRegularPrice: regularPrice,
       productOffer: offerPrice,
-      productTag: productTags.split(",").map((tag) => tag.trim()),
-      images: uploadedImageUrls,
+      productTag: productTags.split(",").map((tag) => tag.trim()), // Split and trim tags
       productLive: productLive === "yes",
-      category: selectedCategory, // Ensure the field name matches the backend
+      category: selectedCategory,
       productCode,
       productTP,
       productMRP: mrp,
+      shortDescription,
+      productYoutubeLink,
+      additionalInfo,
+      images: uploadedImageUrls, // Add image URLs directly as an array
+      pdfFile: pdfFile || null, // Add the PDF file (assuming it's being uploaded separately)
     };
+
+    console.log("this is data -> ", productData);
 
     try {
       const response = await fetch("http://localhost:8000/postProduct", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "application/json", // Send as JSON
         },
-        body: JSON.stringify(productData),
+        body: JSON.stringify(productData), // Convert the product data object to JSON
       });
 
       if (response.ok) {
         const data = await response.json();
 
         setSuccessMessage("Product created successfully!");
-
         alert("Product created successfully!");
+
         // Clear the form fields after successful submission
-        setProductName("");
-        setProductStock("");
-        setProductDescription("");
-        setProductTags("");
-        setProductImages([]);
-        setPendingImages([]);
-        setImagePreviewUrls([]);
-        setProductLive("");
-        setSelectedCategory("");
-        setRegularPrice("");
-        setOfferPrice("");
-        setProductCode("");
-        setProductTP("");
-        setMrp("");
+        clearFormFields();
       } else {
         const errorData = await response.json();
         alert(`Error: ${errorData.error}`);
@@ -165,14 +306,39 @@ export default function Product() {
     }
   };
 
-  const removeImage = (index) => {
-    const updatedPendingImages = pendingImages.filter((_, i) => i !== index);
-    setPendingImages(updatedPendingImages);
+  // Handle the click to choose a PDF file
+  const handleChoosePdfFile = () => {
+    pdfInputRef.current.click();
+  };
 
-    const updatedImagePreviewUrls = imagePreviewUrls.filter(
-      (_, i) => i !== index
-    );
-    setImagePreviewUrls(updatedImagePreviewUrls);
+  // Handle the change event when a PDF file is selected
+  const handlePdfFileChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setPdfFileName(file.name);
+      setPdfFile(file); // This line was missing and ensures the file is stored in the state
+    }
+  };
+
+  const inputStyle = {
+    borderRadius: "5px",
+    borderColor: "#ced4da",
+    marginBottom: "10px",
+    padding: "10px",
+    width: "100%",
+  };
+
+  const labelStyle = {
+    marginBottom: "5px",
+    fontWeight: "bold",
+  };
+
+  const buttonStyle = {
+    borderRadius: "5px",
+    borderColor: "#ced4da",
+    marginBottom: "10px",
+    padding: "10px",
+    width: "100%",
   };
 
   return (
@@ -208,38 +374,30 @@ export default function Product() {
             <div className="row">
               <div className="col-8">
                 <div className="form-group">
-                  <label htmlFor="productName">Product Name</label>
+                  <label htmlFor="productName" style={labelStyle}>
+                    Product Name
+                  </label>
                   <input
                     type="text"
                     className="form-control"
                     id="productName"
                     value={productName}
                     onChange={(e) => setProductName(e.target.value)}
-                    style={{
-                      borderRadius: "5px",
-                      borderColor: "#ced4da",
-                      marginBottom: "10px",
-                      padding: "10px",
-                      width: "100%",
-                    }}
+                    style={inputStyle}
                   />
                 </div>
               </div>
               <div className="col-4">
                 <div className="form-group">
-                  <label htmlFor="productCategory">Product Category</label>
+                  <label htmlFor="productCategory" style={labelStyle}>
+                    Product Category
+                  </label>
                   <select
                     className="form-control"
                     id="productCategory"
                     value={selectedCategory}
                     onChange={handleCategoryChange}
-                    style={{
-                      borderRadius: "5px",
-                      borderColor: "#ced4da",
-                      marginBottom: "10px",
-                      padding: "10px",
-                      width: "100%",
-                    }}
+                    style={inputStyle}
                   >
                     <option value="" disabled>
                       Select a category
@@ -256,54 +414,40 @@ export default function Product() {
 
             <div style={{ display: "flex", gap: "20px" }}>
               <div className="form-group" style={{ flex: 1 }}>
-                <label htmlFor="productStock">Product Stock</label>
+                <label htmlFor="productStock" style={labelStyle}>
+                  Product Stock
+                </label>
                 <input
                   type="number"
                   className="form-control"
                   id="productStock"
                   value={productStock}
                   onChange={(e) => setProductStock(e.target.value)}
-                  style={{
-                    borderRadius: "5px",
-                    borderColor: "#ced4da",
-                    marginBottom: "10px",
-                    padding: "10px",
-                    width: "100%",
-                  }}
+                  style={inputStyle}
                 />
               </div>
 
               <div className="form-group" style={{ flex: 1 }}>
-                <label htmlFor="productTags">Product Tags ( , )</label>
+                <label htmlFor="productTags" style={labelStyle}>
+                  Product Tags ( , )
+                </label>
                 <input
                   type="text"
                   className="form-control"
                   id="productTags"
                   value={productTags}
                   onChange={handleTagChange}
-                  style={{
-                    borderRadius: "5px",
-                    borderColor: "#ced4da",
-                    marginBottom: "10px",
-                    padding: "10px",
-                    width: "100%",
-                  }}
+                  style={inputStyle}
                 />
               </div>
 
               <div className="form-group" style={{ flex: 1 }}>
-                <label>Product Live</label>
+                <label style={labelStyle}>Product Live</label>
                 <select
                   className="form-control"
                   value={productLive}
                   onChange={(e) => setProductLive(e.target.value)}
-                  style={{
-                    borderRadius: "5px",
-                    borderColor: "#ced4da",
-                    marginBottom: "10px",
-                    padding: "10px",
-                    width: "100%",
-                  }}
+                  style={inputStyle}
                 >
                   <option value="">Select an option</option>
                   <option value="yes">Yes</option>
@@ -313,7 +457,9 @@ export default function Product() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="productDescription">Product Description</label>
+              <label htmlFor="productDescription" style={labelStyle}>
+                Product Description
+              </label>
               <CKEditor
                 editor={ClassicEditor}
                 data={productDescription}
@@ -321,29 +467,17 @@ export default function Product() {
                   const data = editor.getData();
                   setProductDescription(data);
                 }}
-                style={{
-                  borderRadius: "5px",
-                  borderColor: "#ced4da",
-                  marginBottom: "10px",
-                  padding: "10px",
-                  width: "100%",
-                }}
+                style={inputStyle}
               />
             </div>
 
             <div className="form-group">
-              <label>Product Images</label>
+              <label style={labelStyle}>Product Images</label>
               <button
                 type="button"
                 className="btn btn-primary"
                 onClick={handleChooseFile}
-                style={{
-                  borderRadius: "5px",
-                  borderColor: "#ced4da",
-                  marginBottom: "10px",
-                  padding: "10px",
-                  width: "100%",
-                }}
+                style={buttonStyle}
               >
                 Choose Files
               </button>
@@ -398,108 +532,90 @@ export default function Product() {
 
             <div style={{ display: "flex", gap: "20px" }}>
               <div className="form-group" style={{ flex: 1 }}>
-                <label htmlFor="productCode">Product Code</label>
+                <label htmlFor="productCode" style={labelStyle}>
+                  Product Code
+                </label>
                 <input
                   type="text"
                   className="form-control"
                   id="productCode"
                   value={productCode}
                   onChange={(e) => setProductCode(e.target.value)}
-                  style={{
-                    borderRadius: "5px",
-                    borderColor: "#ced4da",
-                    marginBottom: "10px",
-                    padding: "10px",
-                    width: "100%",
-                  }}
+                  style={inputStyle}
                 />
               </div>
 
               <div className="form-group" style={{ flex: 1 }}>
-                <label htmlFor="productTP">Product TP</label>
+                <label htmlFor="productTP" style={labelStyle}>
+                  Product TP
+                </label>
                 <input
                   type="number"
                   className="form-control"
                   id="productTP"
                   value={productTP}
                   onChange={(e) => setProductTP(e.target.value)}
-                  style={{
-                    borderRadius: "5px",
-                    borderColor: "#ced4da",
-                    marginBottom: "10px",
-                    padding: "10px",
-                    width: "100%",
-                  }}
+                  style={inputStyle}
                 />
               </div>
 
               <div className="form-group" style={{ flex: 1 }}>
-                <label htmlFor="mrp">Product MRP</label>
+                <label htmlFor="mrp" style={labelStyle}>
+                  Product MRP
+                </label>
                 <input
                   type="number"
                   className="form-control"
                   id="mrp"
                   value={mrp}
                   onChange={(e) => setMrp(e.target.value)}
-                  style={{
-                    borderRadius: "5px",
-                    borderColor: "#ced4da",
-                    marginBottom: "10px",
-                    padding: "10px",
-                    width: "100%",
-                  }}
+                  style={inputStyle}
                 />
               </div>
             </div>
 
             <div style={{ display: "flex", gap: "20px" }}>
               <div className="form-group" style={{ flex: 1 }}>
-                <label htmlFor="regularPrice">Regular Price</label>
+                <label htmlFor="regularPrice" style={labelStyle}>
+                  Regular Price
+                </label>
                 <input
                   type="number"
                   className="form-control"
                   id="regularPrice"
                   value={regularPrice}
                   onChange={(e) => setRegularPrice(e.target.value)}
-                  style={{
-                    borderRadius: "5px",
-                    borderColor: "#ced4da",
-                    marginBottom: "10px",
-                    padding: "10px",
-                    width: "100%",
-                  }}
+                  style={inputStyle}
                 />
               </div>
 
               <div className="form-group" style={{ flex: 1 }}>
-                <label htmlFor="offerPrice">Offer Price</label>
+                <label htmlFor="offerPrice" style={labelStyle}>
+                  Offer Price (%)
+                </label>
                 <input
                   type="number"
                   className="form-control"
                   id="offerPrice"
                   value={offerPrice}
                   onChange={(e) => setOfferPrice(e.target.value)}
-                  style={{
-                    borderRadius: "5px",
-                    borderColor: "#ced4da",
-                    marginBottom: "10px",
-                    padding: "10px",
-                    width: "100%",
-                  }}
+                  style={inputStyle}
                 />
+                {discountedPrice && (
+                  <p style={{ marginTop: "10px" }}>
+                    Discounted Price: ৳{discountedPrice}
+                  </p>
+                )}
               </div>
             </div>
 
+            {/* Additional fields like Short Description, YouTube Link, PDF upload */}
+
+            {/* Submit button */}
             <button
               type="submit"
               className="btn btn-success"
-              style={{
-                borderRadius: "5px",
-                borderColor: "#ced4da",
-                marginBottom: "10px",
-                padding: "10px",
-                width: "100%",
-              }}
+              style={buttonStyle}
               disabled={uploadingImage}
             >
               {uploadingImage ? "Uploading..." : "Save Product"}

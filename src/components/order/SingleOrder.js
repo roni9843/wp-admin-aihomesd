@@ -120,11 +120,23 @@ export default function SingleOrder() {
                           {item.product.productName}
                         </td>
                         <td className="text-center">
-                          ${item.product.productRegularPrice}
+                          {item.productOffer
+                            ? (
+                                item.productRegularPrice.toFixed(2) *
+                                (1 - item.productOffer / 100)
+                              ).toFixed(2)
+                            : item.productRegularPrice.toFixed(2)}
                         </td>
                         <td className="text-center">{item.qty}</td>
                         <td className="text-center">
-                          ${item.qty * item.product.productRegularPrice}
+                          $
+                          {(item.qty * item.productOffer
+                            ? (
+                                item.productRegularPrice.toFixed(2) *
+                                (1 - item.productOffer / 100)
+                              ).toFixed(2)
+                            : item.productRegularPrice.toFixed(2)
+                          ).toFixed(2)}
                         </td>
                         <td className="text-center">
                           <button className="btn btn-warning btn-sm">
