@@ -204,7 +204,6 @@ export default function ProductDashboard() {
                 <th>Code</th>
                 <th>Price</th>
                 <th>Offer</th>
-                <th>Offer Price</th>
                 <th>Live</th>
                 <th>Action</th>
               </tr>
@@ -273,13 +272,14 @@ export default function ProductDashboard() {
                   </td>
                   <td>{p.productCode}</td>
                   <td>
-                    {p.productOffer
+                    {(p.productOffer
                       ? p.productRegularPrice -
                         (p.productRegularPrice * p.productOffer) / 100
-                      : p.productRegularPrice}
+                      : p.productRegularPrice
+                    ).toFixed(2)}
                   </td>
                   <td>{p.productOffer}%</td>
-                  <td>8437</td>
+
                   <td>
                     {p.productLive ? (
                       <div className="alert alert-success" role="alert">
@@ -332,7 +332,6 @@ export default function ProductDashboard() {
                 <th>Code</th>
                 <th>Price</th>
                 <th>Offer</th>
-                <th>Offer Price</th>
                 <th>Live</th>
                 <th>Action</th>
               </tr>

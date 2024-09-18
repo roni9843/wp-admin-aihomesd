@@ -67,10 +67,12 @@ const OrderMetrics = () => {
   const pendingOrders = orders.filter(
     (order) => order.status === "Pending"
   ).length;
-  const ProcessingOrders = orders.filter(
-    (order) => order.status === "Processing"
+  const CompleteOrder = orders.filter(
+    (order) => order.status === "Delivered"
   ).length;
-  const totalEarned = orders.reduce((acc, order) => acc + order.totalAmount, 0);
+  const totalEarned = orders
+    .filter((order) => order.status === "Delivered")
+    .reduce((acc, order) => acc + order.totalAmount, 0);
 
   // Get today's date and the date 30 days ago
   const today = new Date();
@@ -215,10 +217,10 @@ const OrderMetrics = () => {
                 <ProcessingOrdersIcon sx={{ fontSize: 50 }} />
               </Box>
               <Typography variant="h6" component="div" gutterBottom>
-                Processing Orders
+                Complete Orders
               </Typography>
               <Typography variant="h4" component="div">
-                {ProcessingOrders}
+                {CompleteOrder}
               </Typography>
             </CardContent>
           </Card>
@@ -234,7 +236,7 @@ const OrderMetrics = () => {
               )
             }
             sx={{
-              backgroundColor: "#3498db",
+              backgroundColor: "rgb(40, 228, 225)",
               color: "#fff",
               textAlign: "center",
               height: "100%",

@@ -154,7 +154,7 @@ export default function Order() {
                     <td style={cellStyles}>{order.userId.email}</td>
                     <td style={cellStyles}>{order.userId.phoneNumber}</td>
                     <td style={cellStyles}>{order.paymentMethod}</td>
-                    <td style={cellStyles}>${order.totalAmount}</td>
+                    <td style={cellStyles}>{order.totalAmount}</td>
                     <td style={cellStyles}>
                       {new Date(order.orderDate).toLocaleString()}
                     </td>
@@ -179,7 +179,7 @@ export default function Order() {
                                 />
                               </td>
                               <td className="text-center">{product.qty}</td>
-                              <td>${product.product.productRegularPrice}</td>
+                              <td>{product.product.productRegularPrice}</td>
                             </tr>
                           ))}
                         </tbody>

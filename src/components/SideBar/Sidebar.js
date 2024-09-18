@@ -371,7 +371,7 @@ export const Playground = () => {
               <MenuItem
                 onClick={() => setActiveOption("message/email")}
                 icon={<FontAwesomeIcon icon={faUser} />}
-                suffix={<Badge variant="success">{orders?.length}</Badge>}
+                //  suffix={<Badge variant="success">{orders?.length}</Badge>}
               >
                 Email
               </MenuItem>

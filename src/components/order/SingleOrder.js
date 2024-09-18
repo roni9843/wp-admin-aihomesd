@@ -95,7 +95,7 @@ export default function SingleOrder() {
             <div className="card-body">
               <div className="table-responsive">
                 <table className="table table-bordered table-striped table-hover">
-                  <thead className="thead-dark">
+                  <thead className="thead-primary">
                     <tr className=" table-primary">
                       <th className="text-center">Image</th>
                       <th className="text-center">Product Name</th>
@@ -120,24 +120,12 @@ export default function SingleOrder() {
                           {item.product.productName}
                         </td>
                         <td className="text-center">
-                          {item.productOffer
-                            ? (
-                                item.productRegularPrice.toFixed(2) *
-                                (1 - item.productOffer / 100)
-                              ).toFixed(2)
-                            : item.productRegularPrice.toFixed(2)}
+                          {console.log("this is ", item)}
+                          {item.price}
                         </td>
+
                         <td className="text-center">{item.qty}</td>
-                        <td className="text-center">
-                          $
-                          {(item.qty * item.productOffer
-                            ? (
-                                item.productRegularPrice.toFixed(2) *
-                                (1 - item.productOffer / 100)
-                              ).toFixed(2)
-                            : item.productRegularPrice.toFixed(2)
-                          ).toFixed(2)}
-                        </td>
+                        <td className="text-center">{item.qty * item.price}</td>
                         <td className="text-center">
                           <button className="btn btn-warning btn-sm">
                             Visit
@@ -151,7 +139,7 @@ export default function SingleOrder() {
                       </td>
                       <td className="text-center">
                         {" "}
-                        <b> ${order?.totalAmount}</b>
+                        <b> {order?.totalAmount}</b>
                       </td>
                       <td className="text-center"></td>
                     </tr>
@@ -237,12 +225,7 @@ export default function SingleOrder() {
                   </tr>
                   <tr>
                     <th scope="row">Address</th>
-                    <td>
-                      <p>2186 Joyce Street</p>
-                      <p>Rocky Mount</p>
-                      <p>New York - 25645</p>
-                      <p>United States</p>
-                    </td>
+                    <td>{order.address}</td>
                   </tr>
                 </tbody>
               </table>
