@@ -96,6 +96,15 @@ const OrderMetrics = () => {
     return acc;
   }, {});
 
+  const LOCAL_STORAGE_KEY = "orderFilterStatus";
+
+  const handleCardClick = (status, redirectUrl) => {
+    // Set the filter status in localStorage
+    localStorage.setItem(LOCAL_STORAGE_KEY, status);
+    // Redirect to the desired URL in a new tab
+    window.open(redirectUrl, "_blank");
+  };
+
   // Convert the aggregated data to an array format and sort by date
   const orderDataByDate = Object.keys(ordersByDate)
     .map((date) => ({
@@ -115,12 +124,17 @@ const OrderMetrics = () => {
         {/* Total Orders */}
         <Grid item xs={12} sm={6} md={2}>
           <Card
-            onClick={() =>
-              window.open(
-                `${window.location.origin}/dashboard/order/order-list`,
-                "_blank"
-              )
-            }
+            onClick={() => {
+              // window.open(
+              //   `${window.location.origin}/dashboard/order/order-list`,
+              //   "_blank"
+              // )
+
+              handleCardClick(
+                "All",
+                `${window.location.origin}/dashboard/order/order-list`
+              );
+            }}
             sx={{
               backgroundColor: "#4CAF50",
               color: "#fff",
@@ -154,9 +168,9 @@ const OrderMetrics = () => {
         <Grid item xs={12} sm={6} md={2}>
           <Card
             onClick={() =>
-              window.open(
-                `${window.location.origin}/dashboard/order/order-list`,
-                "_blank"
+              handleCardClick(
+                "Pending",
+                `${window.location.origin}/dashboard/order/order-list`
               )
             }
             sx={{
@@ -192,9 +206,9 @@ const OrderMetrics = () => {
         <Grid item xs={12} sm={6} md={2}>
           <Card
             onClick={() =>
-              window.open(
-                `${window.location.origin}/dashboard/order/order-list`,
-                "_blank"
+              handleCardClick(
+                "Delivered",
+                `${window.location.origin}/dashboard/order/order-list`
               )
             }
             sx={{
@@ -268,9 +282,9 @@ const OrderMetrics = () => {
         <Grid item xs={12} sm={6} md={2}>
           <Card
             onClick={() =>
-              window.open(
-                `${window.location.origin}/dashboard/order/order-list`,
-                "_blank"
+              handleCardClick(
+                "Delivered",
+                `${window.location.origin}/dashboard/order/order-list`
               )
             }
             sx={{

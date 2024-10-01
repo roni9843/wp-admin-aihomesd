@@ -2,11 +2,9 @@ import {
   faBook,
   faCalendar,
   faChartBar,
-  faDiamond,
-  faGlobe,
+  faEnvelopeCircleCheck,
   faReorder,
   faShoppingCart,
-  faTint,
   faUser,
   faWrench,
 } from "@fortawesome/free-solid-svg-icons";
@@ -25,6 +23,8 @@ import PerformanceBoard from "../PerformanceBoard/PerformanceBoard";
 import Product from "../Product/Product";
 import Tools from "../Tools/Tools";
 import "./SidebarStyle.css";
+import Coupon from "../Coupon/Coupon";
+import Shipping from "../Shipping/Shipping";
 
 const sidebarClasses = {
   root: "ps-sidebar-root",
@@ -181,12 +181,23 @@ export const Playground = () => {
           themes[theme].menu.hover.backgroundColor,
           hasImage ? 0.8 : 1
         ),
+        // backgroundColor: hexToRgba(
+        //   themes[theme].menu.hover.backgroundColor,
+        //   hasImage ? 0.8 : 1
+        // ),
         color: themes[theme].menu.hover.color,
+        borderRadius: "50px 0px 0px 50px",
       },
     },
     label: ({ open }) => ({
       fontWeight: open ? 600 : undefined,
     }),
+    activeItem: {
+      backgroundColor: themes[theme].menu.hover.backgroundColor, // Use theme hover background color
+      color: themes[theme].menu.hover.color, // Use theme hover text color
+      fontWeight: 600, // Bold active item
+      borderRadius: "50px 0px 0px 50px",
+    },
   };
 
   const [mainMenu, setMainMenu] = useState("");
@@ -322,39 +333,66 @@ export const Playground = () => {
               <MenuItem
                 onClick={() => setActiveOption("board/performance-board")}
                 icon={<FontAwesomeIcon icon={faChartBar} />}
-                // suffix={<Badge variant="success">{orders?.length}</Badge>}
+                style={
+                  mainMenu === "board" && subMenu === "performance-board"
+                    ? menuItemStyles.activeItem
+                    : {}
+                }
               >
                 Dashboard
               </MenuItem>
+
               <MenuItem
                 onClick={() => setActiveOption("order/order-list")}
                 icon={<FontAwesomeIcon icon={faReorder} />}
-                suffix={<Badge variant="success">{orders?.length}</Badge>}
+                style={
+                  mainMenu === "order" && subMenu === "order-list"
+                    ? menuItemStyles.activeItem
+                    : {}
+                }
               >
                 Order
               </MenuItem>
+
               <SubMenu
                 label="Product"
                 icon={<FontAwesomeIcon icon={faShoppingCart} />}
+                style={mainMenu === "product" ? menuItemStyles.activeItem : {}}
               >
                 <MenuItem
                   onClick={() => setActiveOption("product/product-add")}
+                  style={
+                    subMenu === "product-add" ? menuItemStyles.activeItem : {}
+                  }
                 >
                   Add Product
                 </MenuItem>
                 <MenuItem
                   onClick={() => setActiveOption("product/product-edit")}
+                  style={
+                    subMenu === "product-edit" ? menuItemStyles.activeItem : {}
+                  }
                 >
                   Edit Product
                 </MenuItem>
                 <MenuItem
                   onClick={() => setActiveOption("product/product-category")}
+                  style={
+                    subMenu === "product-category"
+                      ? menuItemStyles.activeItem
+                      : {}
+                  }
                 >
                   Category
                 </MenuItem>
                 <MenuItem
                   onClick={() =>
                     setActiveOption("product/product-image-cropper")
+                  }
+                  style={
+                    subMenu === "product-image-cropper"
+                      ? menuItemStyles.activeItem
+                      : {}
                   }
                 >
                   Image Cropper
@@ -364,78 +402,50 @@ export const Playground = () => {
               <MenuItem
                 onClick={() => setActiveOption("user/register-customer")}
                 icon={<FontAwesomeIcon icon={faUser} />}
-                // suffix={<Badge variant="success">{orders?.length}</Badge>}
+                style={
+                  mainMenu === "user" && subMenu === "register-customer"
+                    ? menuItemStyles.activeItem
+                    : {}
+                }
               >
                 Customer
               </MenuItem>
               <MenuItem
-                onClick={() => setActiveOption("message/email")}
+                onClick={() => setActiveOption("shipping/shipping-setting")}
                 icon={<FontAwesomeIcon icon={faUser} />}
-                //  suffix={<Badge variant="success">{orders?.length}</Badge>}
+                style={
+                  mainMenu === "shipping" && subMenu === "shipping-setting"
+                    ? menuItemStyles.activeItem
+                    : {}
+                }
+              >
+              Shipping
+              </MenuItem>
+              <MenuItem
+                onClick={() => setActiveOption("coupon/list-coupon")}
+                icon={<FontAwesomeIcon icon={faUser} />}
+                style={
+                  mainMenu === "coupon" && subMenu === "list-coupon"
+                    ? menuItemStyles.activeItem
+                    : {}
+                }
+              >
+                Coupon
+              </MenuItem>
+
+           
+
+              <MenuItem
+                onClick={() => setActiveOption("message/email")}
+                icon={<FontAwesomeIcon icon={faEnvelopeCircleCheck} />}
+                style={
+                  mainMenu === "message" && subMenu === "email"
+                    ? menuItemStyles.activeItem
+                    : {}
+                }
               >
                 Email
               </MenuItem>
-              <SubMenu
-                style={{ display: "none" }}
-                label="Charts"
-                icon={<FontAwesomeIcon icon={faChartBar} />}
-                // suffix={
-                //   <Badge variant="danger" shape="circle">
-                //     6
-                //   </Badge>
-                // }
-              >
-                <MenuItem> Pie charts</MenuItem>
-                <MenuItem> Line charts</MenuItem>
-                <MenuItem> Bar charts</MenuItem>
-              </SubMenu>
-              <SubMenu
-                style={{ display: "none" }}
-                label="Maps"
-                icon={<FontAwesomeIcon icon={faGlobe} />}
-              >
-                <MenuItem> Google maps</MenuItem>
-                <MenuItem> Open street maps</MenuItem>
-              </SubMenu>
-              <SubMenu
-                style={{ display: "none" }}
-                label="Theme"
-                icon={<FontAwesomeIcon icon={faTint} />}
-              >
-                <MenuItem> Dark</MenuItem>
-                <MenuItem> Light</MenuItem>
-              </SubMenu>
-              <SubMenu
-                style={{ display: "none" }}
-                label="Components"
-                icon={<FontAwesomeIcon icon={faDiamond} />}
-              >
-                <MenuItem> Grid</MenuItem>
-                <MenuItem> Layout</MenuItem>
-                <SubMenu label="Forms">
-                  <MenuItem> Input</MenuItem>
-                  <MenuItem> Select</MenuItem>
-                  <SubMenu label="More">
-                    <MenuItem> CheckBox</MenuItem>
-                    <MenuItem> Radio</MenuItem>
-                  </SubMenu>
-                </SubMenu>
-              </SubMenu>
-              <SubMenu
-                style={{ display: "none" }}
-                label="E-commerce"
-                icon={<FontAwesomeIcon icon={faShoppingCart} />}
-              >
-                <MenuItem onClick={() => setActiveOption("Product")}>
-                  Product
-                </MenuItem>
-                <MenuItem onClick={() => setActiveOption("Orders")}>
-                  Orders
-                </MenuItem>
-                <MenuItem onClick={() => setActiveOption("CreditCard")}>
-                  Credit card
-                </MenuItem>
-              </SubMenu>
             </Menu>
 
             <div
@@ -462,6 +472,11 @@ export const Playground = () => {
               <MenuItem
                 icon={<FontAwesomeIcon icon={faCalendar} />}
                 onClick={() => setActiveOption("tool/Tools")}
+                style={
+                  mainMenu === "tool" && subMenu === "Tools"
+                    ? menuItemStyles.activeItem
+                    : {}
+                }
               >
                 Tools
               </MenuItem>
@@ -536,6 +551,10 @@ export const Playground = () => {
               ? "Edit Product"
               : subMenu === "product-category"
               ? "Upload Category"
+              : subMenu === "list-coupon"
+              ? "Coupon"
+              : subMenu === "shipping-setting"
+              ? "Shipping Setting"
               : subMenu === "register-customer"
               ? "Register Customer"
               : "Dashboard"}
@@ -591,6 +610,8 @@ export const Playground = () => {
           {subMenu === "register-customer" && <Customer />}
           {subMenu === "Tools" && <Tools />}
           {subMenu === "email" && <Email />}
+          {subMenu === "list-coupon" && <Coupon />}
+          {subMenu === "shipping-setting" && <Shipping />}
         </div>
       </div>
     </div>

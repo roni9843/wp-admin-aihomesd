@@ -127,12 +127,55 @@ export default function SingleOrder() {
                         <td className="text-center">{item.qty}</td>
                         <td className="text-center">{item.qty * item.price}</td>
                         <td className="text-center">
-                          <button className="btn btn-warning btn-sm">
-                            Visit
-                          </button>
+                        <button className="btn btn-warning btn-sm">
+                        <a 
+                          href={`https://aihomesd.com/product/${item.product._id}`} // Corrected with curly braces
+                          target="_blank" 
+                          rel="noopener noreferrer" // Improves security by preventing access to the window object
+                          style={{ textDecoration: 'none', color: 'inherit' }} // Optional: Ensures link text inherits styles from button
+                        >
+                          Visit
+                        </a>  
+                      </button>
+                      
                         </td>
                       </tr>
                     ))}
+                    <tr className="font-weight-bold ">
+                      <td colSpan="4" className="text-center">
+                        <b> Total</b>
+                      </td>
+                      <td className="text-center">
+                        {" "}
+                        <b> {order?.totalAmount}</b>
+                      </td>
+                      <td className="text-center"></td>
+                    </tr>
+
+                    {
+                    order?.couponAmount &&     <tr className="font-weight-bold ">
+                      <td colSpan="4" className="text-center">
+                        <b>Coupon ( { order?.couponCode } ) </b>
+                      </td>
+                      <td className="text-center">
+                        {" "}
+                        <b> -{order?.couponAmount  }</b>
+                      </td>
+                      <td className="text-center"></td>
+                    </tr>
+                    }
+
+                
+                    <tr className="font-weight-bold">
+                      <td colSpan="4" className="text-center">
+                        <b> Shipping cost ( { order.shippingState === "shippingOutsideDhaka" ? "ঢাকার বাহিরে" : "ঢাকার মধ্যে" } )</b>
+                      </td>
+                      <td className="text-center">
+                        {" "}
+                        <b> {order?.shippingCost}</b>
+                      </td>
+                      <td className="text-center"></td>
+                    </tr>
                     <tr className="font-weight-bold table-info">
                       <td colSpan="4" className="text-center">
                         <b> Grand Total</b>
@@ -160,7 +203,15 @@ export default function SingleOrder() {
                   <tr>
                     <th scope="row">Order Date</th>
                     <td>
-                      <span>12/02/2024 05:44:50</span>
+                      <span>{ new Date(order.orderDate).toLocaleDateString('en-GB', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: false
+                      }) }</span>
                     </td>
                   </tr>
                   <tr>
@@ -174,6 +225,12 @@ export default function SingleOrder() {
                       />
                     </td>
                   </tr>
+                  <tr>
+                  <th scope="row">Shipping Place</th>
+                  <td>
+                    <span>{order.shippingState === "shippingOutsideDhaka" ? "ঢাকার বাহিরে" : "ঢাকার মধ্যে"}</span>
+                  </td>
+                </tr>
                   <tr>
                     <th scope="row">Order Status</th>
                     <td>
@@ -212,20 +269,25 @@ export default function SingleOrder() {
               <table className="table table-bordered">
                 <tbody>
                   <tr>
-                    <th scope="row">Username</th>
-                    <td>{order.userId.username}</td>
+                    <th scope="row">Name</th>
+                    <td>{order.name}</td>
                   </tr>
-                  <tr>
-                    <th scope="row">Email</th>
-                    <td>{order.userId.email}</td>
-                  </tr>
+                  
                   <tr>
                     <th scope="row">Phone Number</th>
-                    <td>{order.userId.phoneNumber}</td>
+                    <td>{order.phoneNumber}</td>
                   </tr>
                   <tr>
                     <th scope="row">Address</th>
                     <td>{order.address}</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Thana District</th>
+                    <td>{order.thanaDistrict}</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Order Notes</th>
+                    <td>{order.orderNotes}</td>
                   </tr>
                 </tbody>
               </table>

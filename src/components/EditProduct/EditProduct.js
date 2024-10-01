@@ -225,7 +225,7 @@ export default function ProductDashboard() {
                     ))}
                   </select>
                 </th>
-                <th colSpan="6">
+                <th colSpan="5">
                   <input
                     type="text"
                     className="form-control"
