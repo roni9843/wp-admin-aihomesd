@@ -20,6 +20,13 @@ export default function EditProductPage() {
   const [productCode, setProductCode] = useState("");
   const [productImage, setProductImage] = useState([]);
   const [isProductLive, setIsProductLive] = useState(true);
+  const [newProductImage, setNewProductImage] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [errors, setErrors] = useState({});
+  const [uploadLoading, setUploadLoading] = useState(false);
 
   useEffect(() => {
     const path = window.location.pathname;
@@ -27,24 +34,11 @@ export default function EditProductPage() {
     setProductId(id);
   }, []);
 
-  const [selectedCategory, setSelectedCategory] = useState(""); // Default selected ID
-
-  // State to store categories
-  const [categories, setCategories] = useState([]);
-  // State to handle loading state
-  const [loading, setLoading] = useState(true);
-  // State to handle errors
-  const [error, setError] = useState(null);
-
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch(
-          "https://backend.aihomesd.com/getAllCategory"
-        );
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
-        }
+        const response = await fetch("https://backend.aihomesd.com/getAllCategory");
+        if (!response.ok) throw new Error("Network response was not ok");
         const data = await response.json();
         setCategories(data);
       } catch (error) {
@@ -53,24 +47,16 @@ export default function EditProductPage() {
         setLoading(false);
       }
     };
-
     fetchCategories();
   }, []);
 
-  const handleChange = (event) => {
-    setSelectedCategory(event.target.value);
-  };
-
   useEffect(() => {
-    if (productId) {
-      callProduct(productId);
-    }
+    if (productId) callProduct(productId);
   }, [productId]);
 
   const callProduct = async (productId) => {
     const url = "https://backend.aihomesd.com/getProductById";
     const payload = { productId };
-
     try {
       const response = await fetch(url, {
         method: "POST",
@@ -95,85 +81,79 @@ export default function EditProductPage() {
       setProductImage(data.images);
       setIsProductLive(data.productLive);
     } catch (error) {
-      console.error("There was a problem with the fetch operation:", error);
+      console.error("Error fetching product:", error);
     }
   };
 
-  const [newProductImage, setNewProductImage] = useState([]);
-
-  const deleteFetchImageFromArray = (props) => {
-    console.log(props);
-
-    setProductImage(productImage.filter((link) => link !== props));
+  const handleImageUpload = async (file) => {
+    const formData = new FormData();
+    formData.append("image", file);
+    try {
+      const response = await fetch("https://backend.aihomesd.com/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await response.json();
+      return response.ok ? data.imageUrl : null;
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      return null;
+    }
   };
 
-  const [uploadLoading, setUploadLoading] = useState(false);
+  const deleteFetchImageFromArray = (link) => {
+    setProductImage(productImage.filter((img) => img !== link));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     setUploadLoading(true);
 
     const uploadedImageUrls = [];
-
-    for (let i = 0; i < newProductImage.length; i++) {
-      const url = await handleImageUpload(newProductImage[i]);
-      if (url) {
-        uploadedImageUrls.push(url);
-      }
+    for (const image of newProductImage) {
+      const url = await handleImageUpload(image);
+      if (url) uploadedImageUrls.push(url);
     }
 
-    setProductImage([...productImage, ...uploadedImageUrls]);
+    const updatedImages = [...productImage, ...uploadedImageUrls];
+    setProductImage(updatedImages);
     setNewProductImage([]);
 
-    let verifyImage = [...productImage, ...uploadedImageUrls];
-
-    if (verifyImage === 0) {
-      setErrors((prevErrors) => ({
-        ...prevErrors,
-        image: "Please upload an attested image",
-      }));
+    if (updatedImages.length === 0) {
+      setErrors((prev) => ({ ...prev, image: "Please upload at least one image" }));
       setUploadLoading(false);
       return;
     }
 
-    //return;
-
-    // uploadImage();
-
-    if (!validatePrices() || !validateFields()) return;
+    if (!validatePrices() || !validateFields()) {
+      setUploadLoading(false);
+      return;
+    }
 
     const formDataObject = {
-      productName: productName,
-      productStock: !productStock ? 0 : productStock,
-      productRegularPrice: productRegularPrice,
-      productOffer: !productOffer ? 0 : productOffer,
-      productTag: productTag,
-      shortDescription: shortDescription,
-      productYoutubeLink: productYoutubeLink,
-      additionalInfo: additionalInfo,
-      productTP: !productTP ? 0 : productTP,
-      productMRP: !productMRP ? 0 : productMRP,
+      productName,
+      productStock: productStock || 0,
+      productRegularPrice,
+      productOffer: productOffer || 0,
+      productTag,
+      shortDescription,
+      productYoutubeLink,
+      additionalInfo,
+      productTP: productTP || 0,
+      productMRP: productMRP || 0,
       productDescription: productDescriptionState,
       category: selectedCategory,
       productLive: isProductLive,
-      images: [...productImage, ...uploadedImageUrls],
+      images: updatedImages,
     };
 
-    console.log("", formDataObject);
-
     try {
-      const response = await fetch(
-        `https://backend.aihomesd.com/updateProduct/${productId}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formDataObject), // Convert object to JSON
-        }
-      );
-
+      const response = await fetch(`https://backend.aihomesd.com/updateProduct/${productId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formDataObject),
+      });
       if (response.ok) {
-        const data = await response.json();
         alert("Product updated successfully!");
       } else {
         const errorData = await response.json();
@@ -182,53 +162,17 @@ export default function EditProductPage() {
     } catch (error) {
       console.error("Error saving product:", error);
       alert("An error occurred while saving the product.");
-    }
-  };
-
-  const handleImageUpload = async (file) => {
-    //   setUploadingImage(true);
-    const formData = new FormData();
-    formData.append("image", file);
-
-    try {
-      const response = await fetch(
-        "https://api.imgbb.com/1/upload?key=b7424c6aa6bf3ab8f5c2a405e70531a2",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-
-      const data = await response.json();
-      if (data.success) {
-        return data.data.url;
-      } else {
-        console.error("Image upload failed");
-        return null;
-      }
-    } catch (error) {
-      console.error("Error uploading image", error);
-      return null;
     } finally {
-      // setUploadingImage(false);
+      setUploadLoading(false);
     }
   };
-
-  const [errors, setErrors] = useState({});
 
   const validatePrices = () => {
-    if (
-      productRegularPrice < 0 ||
-      productOffer < 0 ||
-      productTP < 0 ||
-      productMRP < 0 ||
-      !productRegularPrice
-    ) {
-      setErrors((prevErrors) => ({
-        ...prevErrors,
-        price: "Prices must be non-negative.",
+    if (productRegularPrice <= 0 || productOffer < 0 || productTP < 0 || productMRP < 0) {
+      setErrors((prev) => ({
+        ...prev,
+        price: "Prices must be non-negative and Regular Price must be positive.",
       }));
-      setUploadLoading(false);
       return false;
     }
     return true;
@@ -236,99 +180,53 @@ export default function EditProductPage() {
 
   const validateFields = () => {
     const newErrors = {};
-
-    if (!productName.trim())
-      newErrors.productName = "Product Name is required.";
+    if (!productName.trim()) newErrors.productName = "Product Name is required.";
     if (productRegularPrice <= 0)
-      newErrors.productRegularPrice =
-        "Regular Price is required and must be positive.";
-
+      newErrors.productRegularPrice = "Regular Price must be positive.";
     setErrors(newErrors);
-    setUploadLoading(false);
     return Object.keys(newErrors).length === 0;
-  };
-
-  const messageStyle = {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    height: "100vh",
-    fontSize: "1.2em",
-    textAlign: "center",
-  };
-
-  const loadingStyle = {
-    ...messageStyle,
-    color: "#007bff",
-    fontSize: "1.5em",
-  };
-
-  const errorStyle = {
-    ...messageStyle,
-    color: "#dc3545",
-    fontSize: "1.5em",
   };
 
   if (loading) {
     return (
-      <div style={loadingStyle}>
-        <p>Loading...</p>
+      <div className="text-center mt-5">
+        <div className="spinner-border text-primary" role="status"></div>
       </div>
     );
   }
 
   if (error) {
-    return (
-      <div style={errorStyle}>
-        <p>Error: {error.message}</p>
-      </div>
-    );
+    return <div className="alert alert-danger text-center mt-5">Error: {error.message}</div>;
   }
 
   return (
-    <div
-      className="container mt-4"
-      style={{
-        maxWidth: "900px",
-        borderRadius: "8px",
-        padding: "20px",
-      }}
-    >
-      <form
-        style={{
-          padding: "20px",
-          backgroundColor: "#f8f9fa",
-          borderRadius: "8px",
-          boxShadow: "0 0 10px rgba(0, 0, 0, 0.1)",
-          marginBottom: "20px",
-        }}
-        onSubmit={handleSubmit}
-      >
+    <div className="container my-4">
+      <form className="p-4 " onSubmit={handleSubmit}>
         <div className="row mb-3">
-          <EditProductPageImage
-            setNewProductImage={setNewProductImage}
-            newProductImage={newProductImage}
-            deleteFetchImageFromArray={deleteFetchImageFromArray}
-            productImage={productImage}
-          ></EditProductPageImage>
-          <div className="col-md-6">
-            <label className="form-label">Product Name</label>
+          <div className="col-md-6 mb-3">
+            <label htmlFor="productName" className="form-label fw-bold">
+              Product Name
+            </label>
             <input
               type="text"
-              className={`form-control ${
-                errors.productName ? "is-invalid" : ""
-              }`}
+              id="productName"
+              className={`form-control ${errors.productName ? "is-invalid" : ""}`}
               value={productName}
               onChange={(e) => setProductName(e.target.value)}
             />
+            {errors.productName && <div className="invalid-feedback">{errors.productName}</div>}
           </div>
-          <div className="col-md-6">
-            <label className="form-label">Categories</label>
+          <div className="col-md-6 mb-3">
+            <label htmlFor="category" className="form-label fw-bold">
+              Categories
+            </label>
             <select
-              className="form-control"
+              id="category"
+              className="form-select"
               value={selectedCategory}
-              onChange={handleChange}
+              onChange={(e) => setSelectedCategory(e.target.value)}
             >
+              <option value="">Select a category</option>
               {categories.map((category) => (
                 <option key={category._id} value={category._id}>
                   {category.category}
@@ -339,208 +237,218 @@ export default function EditProductPage() {
         </div>
 
         <div className="row mb-3">
-          {/* Product Stock and Tags */}
-          <div className="col-md-4">
-            <label className="form-label">Product Stock</label>
+          <div className="col-md-4 mb-3">
+            <label htmlFor="productStock" className="form-label fw-bold">
+              Product Stock
+            </label>
             <input
               type="number"
-              className={`form-control ${
-                errors.productStock ? "is-invalid" : ""
-              }`}
-              value={productStock}
-              onChange={(e) => setProductStock(parseInt(e.target.value))}
-            />
-          </div>
-          <div className="col-md-4">
-            <label className="form-label">Product Tag</label>
-            <input
-              type="text"
-              className={`form-control ${
-                errors.productTag ? "is-invalid" : ""
-              }`}
-              value={productTag}
-              onChange={(e) => setProductTag(e.target.value.split(","))}
-            />
-          </div>
-          <div className="col-md-4">
-            <label className="form-label">Product Live Status</label>
-            <div>
-              <div
-                onClick={() => setIsProductLive(!isProductLive)}
-                style={{
-                  backgroundColor: isProductLive ? "green" : "red",
-                  color: "white",
-                  border: "none",
-                  padding: "10px 20px",
-                  cursor: "pointer",
-                  fontSize: "16px",
-                  borderRadius: "5px",
-                  textAlign: "center", // Center the text inside the button
-                  userSelect: "none", // Disable text selection on double-click
-                }}
-              >
-                {isProductLive ? "Product Live" : "Product Off"}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="row mb-3">
-          {/* Short Description */}
-          <div className="col-md-12">
-            <label className="form-label">Short Description</label>
-            <textarea
-              className={`form-control ${
-                errors.shortDescription ? "is-invalid" : ""
-              }`}
-              value={shortDescription}
-              onChange={(e) => setShortDescription(e.target.value)}
-            ></textarea>
-          </div>
-        </div>
-
-        <div className="row mb-3">
-          {/* Product Code, TP, MRP */}
-          <div className="col-md-4">
-            <label className="form-label">Product Code</label>
-            <input
-              type="text"
-              className={`form-control ${
-                errors.productCode ? "is-invalid" : ""
-              }`}
-              value={productCode}
-              onChange={(e) =>
-                setProductCode(e.target.value.replace(/\s/g, ""))
-              }
-            />
-          </div>
-          <div className="col-md-4">
-            <label className="form-label">TP</label>
-            <input
-              type="number"
-              className={`form-control ${errors.productTP ? "is-invalid" : ""}`}
-              value={productTP}
-              onChange={(e) => setProductTP(parseFloat(e.target.value))}
-            />
-          </div>
-          <div className="col-md-4">
-            <label className="form-label">MRP</label>
-            <input
-              type="number"
-              className={`form-control ${
-                errors.productMRP ? "is-invalid" : ""
-              }`}
-              value={productMRP}
-              onChange={(e) => setProductMRP(parseFloat(e.target.value))}
-            />
-          </div>
-        </div>
-
-        <div className="row mb-3">
-          {/* Product Regular Price and Offer Price */}
-          <div className="col-md-6">
-            <label className="form-label">Regular Price</label>
-            <input
-              type="number"
-              className={`form-control ${
-                errors.productRegularPrice ? "is-invalid" : ""
-              }`}
-              value={productRegularPrice}
-              onChange={(e) =>
-                setProductRegularPrice(parseFloat(e.target.value))
-              }
-            />
-          </div>
-          <div className="col-md-6">
-            <label className="form-label">Offer Price (%)</label>
-            <input
-              type="number"
-              className={`form-control ${
-                errors.productOffer ? "is-invalid" : ""
-              }`}
-              value={productOffer}
-              onChange={(e) => setProductOffer(parseFloat(e.target.value))}
-            />
-          </div>
-        </div>
-
-        <div className="row mb-3">
-          {/* Calculated Final Price */}
-          <div className="col-md-12">
-            <label className="form-label">Final Price</label>
-            <input
-              type="text"
+              id="productStock"
               className="form-control"
-              value={(
-                productRegularPrice -
-                productRegularPrice * (productOffer / 100)
-              ).toFixed(2)}
-              readOnly
+              value={productStock}
+              onChange={(e) => setProductStock(parseInt(e.target.value) || 0)}
             />
           </div>
-        </div>
-
-        <div className="row mb-3">
-          {/* Product YouTube Link */}
-          <div className="col-md-12">
-            <label className="form-label">YouTube Link</label>
+          <div className="col-md-4 mb-3">
+            <label htmlFor="productTag" className="form-label fw-bold">
+              Product Tags
+            </label>
             <input
               type="text"
-              className={`form-control ${
-                errors.productYoutubeLink ? "is-invalid" : ""
-              }`}
-              value={productYoutubeLink}
-              onChange={(e) => setProductYoutubeLink(e.target.value)}
-            />
-          </div>
-        </div>
-
-        <div className="row mb-3">
-          {/* Product Description */}
-          <div className="col-md-12">
-            <label className="form-label">Product Description</label>
-            <CKEditor
-              editor={ClassicEditor}
-              data={productDescriptionState}
-              onChange={(event, editor) =>
-                setProductDescriptionState(editor.getData())
+              id="productTag"
+              className="form-control"
+              value={productTag.join(",")}
+              onChange={(e) =>
+                setProductTag(e.target.value.split(",").map((tag) => tag.trim()))
               }
+              placeholder="e.g., tag1, tag2"
+            />
+          </div>
+          <div className="col-md-4 mb-3">
+            <label className="form-label fw-bold">Product Live Status</label>
+            <button
+              type="button"
+              className={`btn w-100 ${isProductLive ? "btn-success" : "btn-danger"}`}
+              onClick={() => setIsProductLive(!isProductLive)}
+            >
+              {isProductLive ? "Live" : "Off"}
+            </button>
+          </div>
+        </div>
+
+        <div className="mb-3">
+          <label htmlFor="shortDescription" className="form-label fw-bold">
+            Short Description
+          </label>
+          <textarea
+            id="shortDescription"
+            className="form-control"
+            rows="3"
+            value={shortDescription}
+            onChange={(e) => setShortDescription(e.target.value)}
+          />
+        </div>
+
+        <div className="row mb-3">
+          <div className="col-md-4 mb-3">
+            <label htmlFor="productCode" className="form-label fw-bold">
+              Product Code
+            </label>
+            <input
+              type="text"
+              id="productCode"
+              className="form-control"
+              value={productCode}
+              onChange={(e) => setProductCode(e.target.value.replace(/\s/g, ""))}
+            />
+          </div>
+          <div className="col-md-4 mb-3">
+            <label htmlFor="productTP" className="form-label fw-bold">
+              Trade Price (TP)
+            </label>
+            <input
+              type="number"
+              id="productTP"
+              className="form-control"
+              value={productTP}
+              onChange={(e) => setProductTP(parseFloat(e.target.value) || 0)}
+            />
+          </div>
+          <div className="col-md-4 mb-3">
+            <label htmlFor="productMRP" className="form-label fw-bold">
+              MRP
+            </label>
+            <input
+              type="number"
+              id="productMRP"
+              className="form-control"
+              value={productMRP}
+              onChange={(e) => setProductMRP(parseFloat(e.target.value) || 0)}
             />
           </div>
         </div>
 
         <div className="row mb-3">
-          {/* Additional Info */}
-          <div className="col-md-12">
-            <label className="form-label">Additional Info</label>
-            <CKEditor
-              editor={ClassicEditor}
-              data={additionalInfo}
-              onChange={(event, editor) => setAdditionalInfo(editor.getData())}
+          <div className="col-md-6 mb-3">
+            <label htmlFor="productRegularPrice" className="form-label fw-bold">
+              Regular Price
+            </label>
+            <input
+              type="number"
+              id="productRegularPrice"
+              className={`form-control ${errors.productRegularPrice ? "is-invalid" : ""}`}
+              value={productRegularPrice}
+              onChange={(e) => setProductRegularPrice(parseFloat(e.target.value) || 0)}
+            />
+            {errors.productRegularPrice && (
+              <div className="invalid-feedback">{errors.productRegularPrice}</div>
+            )}
+          </div>
+          <div className="col-md-6 mb-3">
+            <label htmlFor="productOffer" className="form-label fw-bold">
+              Offer Price (%)
+            </label>
+            <input
+              type="number"
+              id="productOffer"
+              className="form-control"
+              value={productOffer}
+              onChange={(e) => setProductOffer(parseFloat(e.target.value) || 0)}
             />
           </div>
+        </div>
+
+        <div className="mb-3">
+          <label htmlFor="finalPrice" className="form-label fw-bold">
+            Final Price
+          </label>
+          <input
+            type="text"
+            id="finalPrice"
+            className="form-control"
+            value={(productRegularPrice - productRegularPrice * (productOffer / 100)).toFixed(2)}
+            readOnly
+          />
+        </div>
+
+        <div className="mb-3">
+          <label htmlFor="productYoutubeLink" className="form-label fw-bold">
+            YouTube Link
+          </label>
+          <input
+            type="text"
+            id="productYoutubeLink"
+            className="form-control"
+            value={productYoutubeLink}
+            onChange={(e) => setProductYoutubeLink(e.target.value)}
+          />
+        </div>
+
+        <EditProductPageImage
+          setNewProductImage={setNewProductImage}
+          newProductImage={newProductImage}
+          deleteFetchImageFromArray={deleteFetchImageFromArray}
+          productImage={productImage}
+        />
+
+        <div className="mb-3">
+          <label className="form-label fw-bold">Product Description</label>
+          <CKEditor
+            editor={ClassicEditor}
+            data={productDescriptionState}
+            onChange={(event, editor) => setProductDescriptionState(editor.getData())}
+          />
+        </div>
+
+        <div className="mb-3">
+          <label className="form-label fw-bold">Additional Info</label>
+          <CKEditor
+            editor={ClassicEditor}
+            data={additionalInfo}
+            onChange={(event, editor) => setAdditionalInfo(editor.getData())}
+          />
         </div>
 
         {Object.keys(errors).length > 0 && (
           <div className="alert alert-danger">
-            <ul>
-              {Object.keys(errors).map((key) => (
-                <li key={key}>{errors[key]}</li>
+            <ul className="mb-0">
+              {Object.values(errors).map((err, idx) => (
+                <li key={idx}>{err}</li>
               ))}
             </ul>
           </div>
         )}
 
-        <div className="d-flex justify-content-center">
-          {uploadLoading ? (
-            <div style={{ textAlign: "center" }}> Loading... </div>
-          ) : (
-            <button type="submit" className="btn btn-success px-5 py-2 mt-4">
-              Update Product
-            </button>
-          )}
+        <div className="text-center">
+          <button
+            type="submit"
+            className="btn btn-primary px-5 py-2"
+            disabled={uploadLoading}
+          >
+            {uploadLoading ? (
+              <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            ) : null}
+            {uploadLoading ? "Updating..." : "Update Product"}
+          </button>
         </div>
       </form>
+
+      <style jsx>{`
+        .form-control,
+        .form-select {
+          border-radius: 6px;
+        }
+        .btn-primary {
+          background-color: #007bff;
+          border-color: #007bff;
+          border-radius: 6px;
+          transition: background-color 0.3s ease;
+        }
+        .btn-primary:hover {
+          background-color: #0056b3;
+          border-color: #0056b3;
+        }
+      `}</style>
     </div>
   );
 }

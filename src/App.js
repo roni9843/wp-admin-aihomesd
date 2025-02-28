@@ -2,7 +2,7 @@ import { useLayoutEffect, useState } from "react";
 import "./App.css";
 import Auth from "./components/Auth/Auth";
 import { Playground } from "./components/SideBar/Sidebar";
-
+import { ToolProvider } from './components/Provider/ToolContext';
 function App() {
   const [authState, setAuthState] = useState(false);
 
@@ -26,11 +26,13 @@ function App() {
 
   return (
     <div>
-      {authState ? (
-        <Playground></Playground>
-      ) : (
-        <Auth setAuthState={setAuthState}></Auth>
-      )}
+    <ToolProvider>
+    {authState ? (
+      <Playground></Playground>
+    ) : (
+      <Auth setAuthState={setAuthState}></Auth>
+    )}
+    </ToolProvider>
     </div>
   );
 }

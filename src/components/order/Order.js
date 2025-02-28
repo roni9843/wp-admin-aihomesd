@@ -1,42 +1,39 @@
 import React, { useEffect, useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faFilter, faTimes } from "@fortawesome/free-solid-svg-icons";
 
 export default function Order() {
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
-  const [filterStatus, setFilterStatus] = useState("All");
+  const [filters, setFilters] = useState({
+    status: "All",
+    username: "",
+    email: "",
+    category: "",
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
-    // Get the filter status from local storage on component mount
-    const savedFilterStatus = localStorage.getItem("orderFilterStatus");
-    if (savedFilterStatus) {
-      setFilterStatus(savedFilterStatus);
-    }
+    const savedFilters = JSON.parse(localStorage.getItem("orderFilters")) || {
+      status: "All",
+      username: "",
+      email: "",
+      category: "",
+    };
+    setFilters(savedFilters);
 
     fetch("https://backend.aihomesd.com/getAllOrder")
       .then((response) => {
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
-        }
+        if (!response.ok) throw new Error("Network response was not ok");
         return response.json();
       })
       .then((data) => {
-        const sortedData = data.sort(
-          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-        );
+        const sortedData = data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         setOrders(sortedData);
         setLoading(false);
-
-        // Apply the filter from local storage (if it exists)
-        if (savedFilterStatus && savedFilterStatus !== "All") {
-          const filtered = sortedData.filter(
-            (order) => order.status === savedFilterStatus
-          );
-          setFilteredOrders(filtered);
-        } else {
-          setFilteredOrders(sortedData); // Show all orders by default
-        }
+        applyFilters(sortedData, savedFilters);
       })
       .catch((error) => {
         console.error("Error fetching orders:", error);
@@ -45,107 +42,289 @@ export default function Order() {
       });
   }, []);
 
-  const handleFilterChange = (event) => {
-    const selectedStatus = event.target.value;
-    setFilterStatus(selectedStatus);
-
-    // Save the selected status to local storage
-    localStorage.setItem("orderFilterStatus", selectedStatus);
-
-    if (selectedStatus === "All") {
-      setFilteredOrders(orders); // Show all orders if "All" is selected
-    } else {
-      const filtered = orders.filter(
-        (order) => order.status === selectedStatus
-      );
-      setFilteredOrders(filtered);
+  const applyFilters = (data, filterValues) => {
+    let result = [...data];
+    if (filterValues.status !== "All") {
+      result = result.filter((order) => order.status === filterValues.status);
     }
+    if (filterValues.username) {
+      result = result.filter((order) =>
+        order.userId.username.toLowerCase().includes(filterValues.username.toLowerCase())
+      );
+    }
+    if (filterValues.email) {
+      result = result.filter((order) =>
+        order.userId.email.toLowerCase().includes(filterValues.email.toLowerCase())
+      );
+    }
+    if (filterValues.category) {
+      result = result.filter((order) =>
+        order.products.some((product) =>
+          product.product.category.toLowerCase().includes(filterValues.category.toLowerCase())
+        )
+      );
+    }
+    setFilteredOrders(result);
   };
 
-  const tableStyles = { backgroundColor: "#f8f9fa" };
-  const cellStyles = { padding: "0.3rem", fontSize: "0.875rem" };
-  const imgStyles = { maxHeight: "50px", objectFit: "cover" };
-  const buttonStyles = {
-    backgroundColor: "#007bff",
-    borderColor: "#007bff",
-    color: "white",
-    marginLeft: "auto",
-    cursor: "pointer",
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    const newFilters = { ...filters, [name]: value };
+    setFilters(newFilters);
+    localStorage.setItem("orderFilters", JSON.stringify(newFilters));
+    applyFilters(orders, newFilters);
   };
-  const buttonHoverStyles = {
-    backgroundColor: "#0056b3",
-    borderColor: "#004085",
+
+  const resetFilters = () => {
+    const defaultFilters = { status: "All", username: "", email: "", category: "" };
+    setFilters(defaultFilters);
+    localStorage.setItem("orderFilters", JSON.stringify(defaultFilters));
+    setFilteredOrders(orders);
   };
 
   return (
-    <div className="container mt-5 pt-5">
-      <div className="card shadow">
-        <div className="card-body">
+    <div className="container-fluid mt-4 pt-4 px-4" style={{ minHeight: "100vh" }}>
+      <div
+        className="card shadow-sm border-0"
+        style={{ backgroundColor: "#fff", borderRadius: "12px", overflow: "hidden" }}
+      >
+        <div
+          className="card-header bg-light border-bottom d-flex align-items-center justify-content-between"
+          style={{ padding: "15px 20px", backgroundColor: "#f1f3f5" }}
+        >
+          <h5
+            className="mb-0"
+            style={{ fontWeight: "700", color: "#0B2948", userSelect: "none" }}
+          >
+            Order Management
+          </h5>
+          <button
+            className="btn btn-outline-primary btn-sm"
+            onClick={() => setShowFilters(!showFilters)}
+            style={{
+              fontSize: "0.9rem",
+              padding: "6px 12px",
+              borderRadius: "6px",
+              transition: "all 0.3s ease",
+            }}
+          >
+            <FontAwesomeIcon icon={showFilters ? faTimes : faFilter} />{" "}
+            {showFilters ? "Hide Filters" : "Filters"}
+          </button>
+        </div>
+
+        {showFilters && (
+          <div
+            className="card-body border-bottom py-3"
+            style={{ backgroundColor: "#f8f9fa" }}
+          >
+            <div className="row g-3">
+              <div className="col-md-3">
+                <label
+                  htmlFor="statusFilter"
+                  style={{
+                    fontSize: "0.9rem",
+                    fontWeight: "600",
+                    color: "#0B2948",
+                    marginBottom: "5px",
+                  }}
+                >
+                  Status
+                </label>
+                <select
+                  id="statusFilter"
+                  name="status"
+                  className="form-select"
+                  value={filters.status}
+                  onChange={handleFilterChange}
+                  style={{
+                    fontSize: "0.9rem",
+                    padding: "8px 12px",
+                    borderRadius: "6px",
+                    borderColor: "#ced4da",
+                  }}
+                >
+                  <option value="All">All Orders</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Processing">Processing</option>
+                  <option value="Shipped">Shipped</option>
+                  <option value="Delivered">Delivered</option>
+                  <option value="Cancelled">Cancelled</option>
+                </select>
+              </div>
+              <div className="col-md-3">
+                <label
+                  htmlFor="usernameFilter"
+                  style={{
+                    fontSize: "0.9rem",
+                    fontWeight: "600",
+                    color: "#0B2948",
+                    marginBottom: "5px",
+                  }}
+                >
+                  Username
+                </label>
+                <input
+                  id="usernameFilter"
+                  name="username"
+                  type="text"
+                  className="form-control"
+                  value={filters.username}
+                  onChange={handleFilterChange}
+                  placeholder="Search by username"
+                  style={{
+                    fontSize: "0.9rem",
+                    padding: "8px 12px",
+                    borderRadius: "6px",
+                  }}
+                />
+              </div>
+              <div className="col-md-3">
+                <label
+                  htmlFor="emailFilter"
+                  style={{
+                    fontSize: "0.9rem",
+                    fontWeight: "600",
+                    color: "#0B2948",
+                    marginBottom: "5px",
+                  }}
+                >
+                  Email
+                </label>
+                <input
+                  id="emailFilter"
+                  name="email"
+                  type="text"
+                  className="form-control"
+                  value={filters.email}
+                  onChange={handleFilterChange}
+                  placeholder="Search by email"
+                  style={{
+                    fontSize: "0.9rem",
+                    padding: "8px 12px",
+                    borderRadius: "6px",
+                  }}
+                />
+              </div>
+              <div className="col-md-3">
+                <label
+                  htmlFor="categoryFilter"
+                  style={{
+                    fontSize: "0.9rem",
+                    fontWeight: "600",
+                    color: "#0B2948",
+                    marginBottom: "5px",
+                  }}
+                >
+                  Product Category
+                </label>
+                <input
+                  id="categoryFilter"
+                  name="category"
+                  type="text"
+                  className="form-control"
+                  value={filters.category}
+                  onChange={handleFilterChange}
+                  placeholder="Search by category"
+                  style={{
+                    fontSize: "0.9rem",
+                    padding: "8px 12px",
+                    borderRadius: "6px",
+                  }}
+                />
+              </div>
+              <div className="col-12 d-flex justify-content-end">
+                <button
+                  className="btn btn-outline-secondary btn-sm"
+                  onClick={resetFilters}
+                  style={{
+                    fontSize: "0.9rem",
+                    padding: "6px 12px",
+                    borderRadius: "6px",
+                  }}
+                >
+                  Reset Filters
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="card-body p-0">
           {loading ? (
             <div
               className="d-flex justify-content-center align-items-center"
-              style={{ height: "200px" }}
+              style={{ height: "300px", backgroundColor: "#f8f9fa" }}
             >
               <div
                 className="spinner-border text-primary"
+                style={{ width: "3rem", height: "3rem" }}
                 role="status"
-                aria-label="Loading"
               >
                 <span className="visually-hidden">Loading...</span>
               </div>
             </div>
           ) : error ? (
             <div
-              className="d-flex justify-content-center align-items-center"
-              style={{ height: "200px" }}
+              className="d-flex justify-content-center align-items-center text-danger"
+              style={{ height: "300px", fontSize: "1.1rem", fontWeight: "500" }}
             >
-              <h5 className="text-danger">{error}</h5>
+              {error}
             </div>
           ) : (
-            <div className="table-responsive" style={tableStyles}>
-              <table className="table table-bordered table-sm table-striped table-hover">
-                <thead className="table-primary">
+            <div className="table-responsive">
+              <table
+                className="table table-hover table-striped align-middle"
+                style={{
+                  marginBottom: "0",
+                  backgroundColor: "#fff",
+                  fontSize: "0.9rem",
+                }}
+              >
+                <thead
+                  style={{
+                    backgroundColor: "#0B2948",
+                    color: "#fff",
+                    position: "sticky",
+                    top: "0",
+                    zIndex: "1",
+                  }}
+                >
                   <tr className="text-center">
-                    <th scope="col" style={{ padding: "10px 10px" }}>
+                    <th
+                      scope="col"
+                      style={{ padding: "12px", fontWeight: "600", userSelect: "none" }}
+                    >
                       Order ID
                     </th>
-                    <th scope="col">
-                      <select
-                        className="form-select"
-                        aria-label="Order status filter"
-                        value={filterStatus}
-                        onChange={handleFilterChange}
-                      >
-                        <option value="All">All</option>
-                        <option value="Pending">Pending</option>
-                        <option value="Processing">Processing</option>
-                        <option value="Shipped">Shipped</option>
-                        <option value="Delivered">Delivered</option>
-                        <option value="Cancelled">Cancelled</option>
-                      </select>
+                    <th style={{ padding: "12px", fontWeight: "600", userSelect: "none" }}>
+                      Status
                     </th>
-                    <th scope="col" style={{ padding: "10px 10px" }}>
+                    <th style={{ padding: "12px", fontWeight: "600", userSelect: "none" }}>
                       Name
                     </th>
-                    <th scope="col" style={{ padding: "10px 10px" }}>
+                    <th style={{ padding: "12px", fontWeight: "600", userSelect: "none" }}>
+                      Email
+                    </th>
+                    <th style={{ padding: "12px", fontWeight: "600", userSelect: "none" }}>
                       Place
                     </th>
-                    <th scope="col" style={{ padding: "10px 10px" }}>
+                    <th style={{ padding: "12px", fontWeight: "600", userSelect: "none" }}>
                       Phone
                     </th>
-                    <th scope="col" style={{ padding: "10px 10px" }}>
+                    <th style={{ padding: "12px", fontWeight: "600", userSelect: "none" }}>
                       Payment
                     </th>
-                    <th scope="col" style={{ padding: "10px 10px" }}>
+                    <th style={{ padding: "12px", fontWeight: "600", userSelect: "none" }}>
                       Total
                     </th>
-                    <th scope="col" style={{ padding: "10px 10px" }}>
+                    <th style={{ padding: "12px", fontWeight: "600", userSelect: "none" }}>
                       Order Date
                     </th>
-                    <th scope="col" style={{ padding: "10px 10px" }}>
+                    <th style={{ padding: "12px", fontWeight: "600", userSelect: "none" }}>
                       Products
                     </th>
-                    <th scope="col" style={{ padding: "10px 10px" }}>
+                    <th style={{ padding: "12px", fontWeight: "600", userSelect: "none" }}>
                       Action
                     </th>
                   </tr>
@@ -153,86 +332,175 @@ export default function Order() {
                 <tbody>
                   {filteredOrders.length > 0 ? (
                     filteredOrders.map((order) => (
-                      <tr key={order._id}>
-                        <td style={cellStyles}>{order.orderId}</td>
-                        <td style={cellStyles} className="text-center">
-                          {order.status === "Pending" && (
-                            <span className="badge rounded-pill text-bg-warning">
-                              Pending
-                            </span>
-                          )}
-                          {order.status === "Cancelled" && (
-                            <span className="badge rounded-pill text-bg-danger">
-                              Cancelled
-                            </span>
-                          )}
-                          {order.status === "Shipped" && (
-                            <span className="badge rounded-pill text-bg-info">
-                              Shipped
-                            </span>
-                          )}
-                          {order.status === "Delivered" && (
-                            <span className="badge rounded-pill text-bg-success">
-                              Delivered
-                            </span>
-                          )}
-                          {order.status === "Processing" && (
-                            <span className="badge rounded-pill text-bg-primary">
-                              Processing
-                            </span>
-                          )}
+                      <tr
+                        key={order._id}
+                        style={{ transition: "background-color 0.2s ease" }}
+                        className="text-center"
+                      >
+                        <td
+                          style={{
+                            padding: "10px",
+                            verticalAlign: "middle",
+                            fontSize: "0.85rem",
+                          }}
+                        >
+                          {order.orderId}
                         </td>
-                        <td style={cellStyles}>{order.userId.username}</td>
-                        <td style={cellStyles}>{order.shippingState === "shippingOutsideDhaka" ? "ঢাকার বাহিরে" : "ঢাকার মধ্যে"}</td>
-                        <td style={cellStyles}>{order.userId.phoneNumber}</td>
-                        <td style={cellStyles}>{order.paymentMethod}</td>
-                        <td style={cellStyles}>{order.totalAmount  - order.couponAmount + order.shippingCost}</td>
-                        <td style={cellStyles}>
+                        <td style={{ padding: "10px", verticalAlign: "middle" }}>
+                          <span
+                            className="badge rounded-pill"
+                            style={{
+                              backgroundColor:
+                                order.status === "Pending"
+                                  ? "#ffc107"
+                                  : order.status === "Cancelled"
+                                  ? "#dc3545"
+                                  : order.status === "Shipped"
+                                  ? "#17a2b8"
+                                  : order.status === "Delivered"
+                                  ? "#28a745"
+                                  : "#007bff",
+                              color: "#fff",
+                              padding: "6px 12px",
+                              fontSize: "0.8rem",
+                            }}
+                          >
+                            {order.status}
+                          </span>
+                        </td>
+                        <td
+                          style={{
+                            padding: "10px",
+                            verticalAlign: "middle",
+                            fontSize: "0.85rem",
+                          }}
+                        >
+                          {order.userId.username}
+                        </td>
+                        <td
+                          style={{
+                            padding: "10px",
+                            verticalAlign: "middle",
+                            fontSize: "0.85rem",
+                          }}
+                        >
+                          {order.userId.email}
+                        </td>
+                        <td
+                          style={{
+                            padding: "10px",
+                            verticalAlign: "middle",
+                            fontSize: "0.85rem",
+                          }}
+                        >
+                          {order.shippingState === "shippingOutsideDhaka" ? "ঢাকার বাহিরে" : "ঢাকার মধ্যে"}
+                        </td>
+                        <td
+                          style={{
+                            padding: "10px",
+                            verticalAlign: "middle",
+                            fontSize: "0.85rem",
+                          }}
+                        >
+                          {order.userId.phoneNumber}
+                        </td>
+                        <td
+                          style={{
+                            padding: "10px",
+                            verticalAlign: "middle",
+                            fontSize: "0.85rem",
+                          }}
+                        >
+                          {order.paymentMethod}
+                        </td>
+                        <td
+                          style={{
+                            padding: "10px",
+                            verticalAlign: "middle",
+                            fontSize: "0.85rem",
+                          }}
+                        >
+                          {order.totalAmount - order.couponAmount + order.shippingCost}
+                        </td>
+                        <td
+                          style={{
+                            padding: "10px",
+                            verticalAlign: "middle",
+                            fontSize: "0.85rem",
+                          }}
+                        >
                           {new Date(order.orderDate).toLocaleString()}
                         </td>
-                        <td style={cellStyles}>
-                          <table className="table table-sm">
+                        <td style={{ padding: "10px", verticalAlign: "middle" }}>
+                          <table
+                            className="table table-sm mb-0"
+                            style={{ backgroundColor: "#f8f9fa", borderRadius: "6px" }}
+                          >
                             <thead>
                               <tr>
-                                <th scope="col">Image</th>
-                                <th scope="col">Qty</th>
-                                <th scope="col">Price</th>
+                                <th style={{ padding: "8px", fontSize: "0.8rem" }}>Image</th>
+                                <th
+                                  style={{
+                                    padding: "8px",
+                                    fontSize: "0.8rem",
+                                    textAlign: "center",
+                                  }}
+                                >
+                                  Qty
+                                </th>
+                                <th style={{ padding: "8px", fontSize: "0.8rem" }}>Price</th>
                               </tr>
                             </thead>
                             <tbody>
                               {order.products.map((product) => (
                                 <tr key={product.product._id}>
-                                  <td>
+                                  <td style={{ padding: "8px" }}>
                                     <img
                                       src={product.product.images[0]}
                                       alt={product.product.productName}
-                                      className="img-fluid"
-                                      style={imgStyles}
+                                      style={{
+                                        maxHeight: "40px",
+                                        width: "auto",
+                                        objectFit: "cover",
+                                        borderRadius: "4px",
+                                      }}
                                     />
                                   </td>
-                                  <td className="text-center">{product.qty}</td>
-                                  <td>{product.product.productRegularPrice}</td>
+                                  <td
+                                    style={{
+                                      padding: "8px",
+                                      textAlign: "center",
+                                      fontSize: "0.85rem",
+                                    }}
+                                  >
+                                    {product.qty}
+                                  </td>
+                                  <td style={{ padding: "8px", fontSize: "0.85rem" }}>
+                                    {product.product.productRegularPrice}
+                                  </td>
                                 </tr>
                               ))}
                             </tbody>
                           </table>
                         </td>
-                        <td style={cellStyles}>
+                        <td style={{ padding: "10px", verticalAlign: "middle" }}>
                           <button
                             className="btn btn-sm"
-                            style={buttonStyles}
-                            onMouseOver={(e) => {
-                              e.target.style.backgroundColor =
-                                buttonHoverStyles.backgroundColor;
-                              e.target.style.borderColor =
-                                buttonHoverStyles.borderColor;
+                            style={{
+                              backgroundColor: "#1abc9c",
+                              color: "#fff",
+                              border: "none",
+                              padding: "6px 12px",
+                              borderRadius: "6px",
+                              fontSize: "0.85rem",
+                              transition: "background-color 0.3s ease",
                             }}
-                            onMouseOut={(e) => {
-                              e.target.style.backgroundColor =
-                                buttonStyles.backgroundColor;
-                              e.target.style.borderColor =
-                                buttonStyles.borderColor;
-                            }}
+                            onMouseOver={(e) =>
+                              (e.target.style.backgroundColor = "#148c76")
+                            }
+                            onMouseOut={(e) =>
+                              (e.target.style.backgroundColor = "#1abc9c")
+                            }
                             onClick={() =>
                               window.open(
                                 `${window.location.origin}/dashboard/order/order-list/orderId=${order._id}`,
@@ -248,9 +516,13 @@ export default function Order() {
                   ) : (
                     <tr>
                       <td
-                        colSpan="10"
+                        colSpan="11"
                         className="text-center"
-                        style={{ padding: "1rem" }}
+                        style={{
+                          padding: "20px",
+                          fontSize: "1rem",
+                          color: "#6c757d",
+                        }}
                       >
                         No orders found.
                       </td>

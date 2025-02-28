@@ -4,9 +4,12 @@ import { Typography } from "@mui/material";
 import { red } from "@mui/material/colors";
 import React, { useEffect, useRef, useState } from "react";
 import "./Product.css";
-
+import { faPlus, faTimes } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import { Box, IconButton } from "@mui/material";
+import ImageUpload from './../EditProduct/EditProductPageImage';
+import ImageUpload_22 from "./ImageUpload";
 
 const ErrorMessage = ({ message }) => {
   const [visible, setVisible] = useState(true);
@@ -120,17 +123,16 @@ export default function Product() {
     formData.append("image", file);
 
     try {
-      const response = await fetch(
-        "https://api.imgbb.com/1/upload?key=b7424c6aa6bf3ab8f5c2a405e70531a2",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+      const res = await fetch("https://backend.aihomesd.com/upload", {
+        method: "POST",
+        body: formData,
+    });
 
-      const data = await response.json();
-      if (data.success) {
-        return data.data.url;
+      const data = await res.json();
+
+
+      if (res.ok) {
+        return data.imageUrl;
       } else {
         console.error("Image upload failed");
         return null;
@@ -142,6 +144,9 @@ export default function Product() {
       setUploadingImage(false);
     }
   };
+
+
+
 
   const handleChooseFile = () => {
     fileInputRef.current.click();
@@ -313,6 +318,10 @@ export default function Product() {
     setProductCode("");
     setProductTP("");
     setMrp("");
+    setShortDescription("");
+    setProductYoutubeLink("");
+    setAdditionalInfo("");
+    
   };
 
   // Function to handle image removal with confirmation
@@ -415,8 +424,7 @@ export default function Product() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    // Validation for prices
-    if (!validateForm()) return;
+   
 
     const uploadedImageUrls = [];
 
@@ -428,8 +436,13 @@ export default function Product() {
       }
     }
 
+  
+
     setPendingImages([]);
     setImagePreviewUrls([]);
+
+       // Validation for prices
+       if (!validateForm(uploadedImageUrls)) return;
 
     // Create a product data object instead of FormData
     const productData = {
@@ -511,7 +524,7 @@ export default function Product() {
 
   const isNotEmpty = (value) => value.trim() !== "";
 
-  const validateForm = () => {
+  const validateForm = (uploadedImageUrls) => {
     let isValid = true;
     const newErrors = {};
 
@@ -528,7 +541,7 @@ export default function Product() {
       isValid = false;
       newErrors.selectedCategory = "Product Category is required.";
     }
-    if (productImages.length === 0) {
+    if (uploadedImageUrls.length === 0) {
       isValid = false;
       newErrors.productImages = "At least one Product Image is required.";
     }
@@ -569,433 +582,353 @@ export default function Product() {
   };
 
   return (
-    <div style={{ padding: "20px" }}>
-      {successMessage && (
-        <div
-          className="alert alert-success"
-          role="alert"
-          style={{ marginBottom: "20px" }}
-        >
-          {successMessage}
-        </div>
-      )}
-
-      <div
+    <div className="container-fluid" style={{ padding: "20px", backgroundColor: "#f1f3f5" }}>
+    {successMessage && (
+      <div 
+        className="alert alert-success alert-dismissible fade show" 
+        role="alert"
+        style={{ marginBottom: "20px", borderRadius: "8px" }}
+      >
+        {successMessage}
+        <button type="button" className="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    )}
+  
+    <div className="row justify-content-center">
+      <div 
+        className="col-12 col-lg-10 card"
         style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
+          padding: "25px",
+          backgroundColor: "#ffffff",
+          borderRadius: "12px",
+          boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+          border: "none",
+          marginBottom: "20px"
         }}
       >
-        <div
-          style={{
-            padding: "20px",
-            backgroundColor: "#f8f9fa",
-            borderRadius: "8px",
-            boxShadow: "0 0 10px rgba(0, 0, 0, 0.1)",
-            marginBottom: "20px",
-            width: "900px",
-          }}
-        >
-          <form onSubmit={handleSubmit}>
-            <div className="row">
-              <div className="col-8">
-                <div className="form-group">
-                  <label htmlFor="productName">Product Name</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    id="productName"
-                    value={productName}
-                    onChange={handleProductNameChange}
-                    style={{
-                      borderRadius: "5px",
-                      borderColor: "#ced4da",
-                      marginBottom: "10px",
-                      padding: "10px",
-                      width: "100%",
-                    }}
-                  />
-                </div>
-              </div>
-              <div className="col-4">
-                <div className="form-group">
-                  <label htmlFor="productCategory">Product Category</label>
-                  <select
-                    className="form-control"
-                    id="productCategory"
-                    value={selectedCategory}
-                    onChange={handleCategoryChange}
-                    style={{
-                      borderRadius: "5px",
-                      borderColor: "#ced4da",
-                      marginBottom: "10px",
-                      padding: "10px",
-                      width: "100%",
-                    }}
-                  >
-                    <option value="" disabled>
-                      Select a category
-                    </option>
-                    {productCategory.map((category) => (
-                      <option key={category._id} value={category._id}>
-                        {category.category}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <div style={{ display: "flex", gap: "20px" }}>
-              <div className="form-group" style={{ flex: 1 }}>
-                <label htmlFor="productStock">Product Stock</label>
-                <input
-                  type="number"
-                  className="form-control"
-                  id="productStock"
-                  value={productStock}
-                  onChange={handleProductStockChange}
-                  style={{
-                    borderRadius: "5px",
-                    borderColor: "#ced4da",
-                    marginBottom: "10px",
-                    padding: "10px",
-                    width: "100%",
-                  }}
-                />
-              </div>
-
-              <div className="form-group" style={{ flex: 1 }}>
-                <label htmlFor="productTags">Product Tags ( , )</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  id="productTags"
-                  value={productTags}
-                  onChange={handleTagChange}
-                  style={{
-                    borderRadius: "5px",
-                    borderColor: "#ced4da",
-                    marginBottom: "10px",
-                    padding: "10px",
-                    width: "100%",
-                  }}
-                />
-              </div>
-
-              <div className="form-group" style={{ flex: 1 }}>
-                <label>Product Live</label>
-                <select
-                  className="form-control"
-                  value={productLive}
-                  onChange={(e) => setProductLive(e.target.value)}
-                  style={{
-                    borderRadius: "5px",
-                    borderColor: "#ced4da",
-                    marginBottom: "10px",
-                    padding: "10px",
-                    width: "100%",
-                  }}
-                >
-                  <option value="">Select an option</option>
-                  <option value="yes">Yes</option>
-                  <option value="no">No</option>
-                </select>
-              </div>
-            </div>
-            <div className="form-group">
-              <label htmlFor="shortDescription">Short Description</label>
+        <h3 className="mb-4" style={{ color: "#2c3e50", fontWeight: "600" }}>
+          Create New Product
+        </h3>
+        
+        <form onSubmit={handleSubmit}>
+          <div className="row g-3 mb-3">
+            <div className="col-md-8">
+              <label htmlFor="productName" className="form-label" style={{ color: "#495057" }}>
+                Product Name
+              </label>
               <input
                 type="text"
                 className="form-control"
-                id="shortDescription"
-                value={shortDescription}
-                onChange={handleProductDesChange}
+                id="productName"
+                value={productName}
+                onChange={handleProductNameChange}
                 style={{
-                  borderRadius: "5px",
-                  borderColor: "#ced4da",
-                  marginBottom: "10px",
-                  padding: "10px",
-                  width: "100%",
+                  borderRadius: "6px",
+                  padding: "12px",
+                  borderColor: "#dee2e6",
+                  boxShadow: "inset 0 1px 2px rgba(0,0,0,0.05)"
                 }}
               />
             </div>
-
-            <div className="form-group">
-              <label>Product Images</label>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={handleChooseFile}
+            <div className="col-md-4">
+              <label htmlFor="productCategory" className="form-label" style={{ color: "#495057" }}>
+                Product Category
+              </label>
+              <select
+                className="form-select"
+                id="productCategory"
+                value={selectedCategory}
+                onChange={handleCategoryChange}
                 style={{
-                  borderRadius: "5px",
-                  borderColor: "#ced4da",
-                  marginBottom: "10px",
-                  padding: "10px",
-                  width: "100%",
+                  borderRadius: "6px",
+                  padding: "12px",
+                  borderColor: "#dee2e6",
+                  boxShadow: "inset 0 1px 2px rgba(0,0,0,0.05)"
                 }}
               >
-                Choose Files
-              </button>
-              <input
-                type="file"
-                accept=".jpg,.png,.jpeg"
-                multiple
-                style={{ display: "none" }}
-                ref={fileInputRef}
-                onChange={handleFileInputChange}
-              />
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
-                {imagePreviewUrls.map((url, index) => (
-                  <div
-                    key={index}
-                    style={{ position: "relative", display: "inline-block" }}
-                  >
-                    <img
-                      src={url}
-                      alt="Preview"
-                      style={{
-                        width: "100px",
-                        height: "100px",
-                        objectFit: "cover",
-                        borderRadius: "5px",
-                      }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeImage(index)}
-                      style={{
-                        position: "absolute",
-                        top: "5px",
-                        right: "5px",
-                        backgroundColor: "red",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "50%",
-                        width: "20px",
-                        height: "20px",
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        cursor: "pointer",
-                      }}
-                    >
-                      &times;
-                    </button>
-                  </div>
+                <option value="" disabled>Select a category</option>
+                {productCategory.map((category) => (
+                  <option key={category._id} value={category._id}>
+                    {category.category}
+                  </option>
                 ))}
-              </div>
+              </select>
             </div>
-
-            <div style={{ display: "flex", gap: "20px" }}>
-              <div className="form-group" style={{ flex: 1 }}>
-                <label htmlFor="productCode">Product Code</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  id="productCode"
-                  value={productCode}
-                  onChange={handleProductCode}
-                  style={{
-                    borderRadius: "5px",
-                    borderColor: "#ced4da",
-                    marginBottom: "10px",
-                    padding: "10px",
-                    width: "100%",
-                  }}
-                />
-              </div>
-
-              <div className="form-group" style={{ flex: 1 }}>
-                <label htmlFor="productTP">Product TP</label>
-                <input
-                  type="number"
-                  className="form-control"
-                  id="productTP"
-                  value={productTP}
-                  onChange={handleProductTP}
-                  style={{
-                    borderRadius: "5px",
-                    borderColor: "#ced4da",
-                    marginBottom: "10px",
-                    padding: "10px",
-                    width: "100%",
-                  }}
-                />
-              </div>
-
-              <div className="form-group" style={{ flex: 1 }}>
-                <label htmlFor="mrp">Product MRP</label>
-                <input
-                  type="number"
-                  className="form-control"
-                  id="mrp"
-                  value={mrp}
-                  onChange={handleProductMRP}
-                  style={{
-                    borderRadius: "5px",
-                    borderColor: "#ced4da",
-                    marginBottom: "10px",
-                    padding: "10px",
-                    width: "100%",
-                  }}
-                />
-              </div>
+          </div>
+  
+          <div className="row g-3 mb-3">
+            <div className="col-md-4">
+              <label htmlFor="productStock" className="form-label" style={{ color: "#495057" }}>
+                Product Stock
+              </label>
+              <input
+                type="number"
+                className="form-control"
+                id="productStock"
+                value={productStock}
+                onChange={handleProductStockChange}
+                style={{ borderRadius: "6px", padding: "12px", borderColor: "#dee2e6" }}
+              />
             </div>
-            <div style={{ display: "flex", gap: "20px" }}>
-              <div className="form-group" style={{ flex: 1 }}>
-                <label htmlFor="regularPrice">Regular Price</label>
-                <input
-                  type="number"
-                  className="form-control"
-                  id="regularPrice"
-                  value={regularPrice}
-                  onChange={handleRegularPriceChange}
-                  style={{
-                    borderRadius: "5px",
-                    borderColor: "#ced4da",
-                    marginBottom: "10px",
-                    padding: "10px",
-                    width: "100%",
-                  }}
-                />
-              </div>
-
-              <div className="form-group" style={{ flex: 1 }}>
-                <label htmlFor="offerPrice">Offer Price (%)</label>
-                <input
-                  type="number"
-                  className="form-control"
-                  id="offerPrice"
-                  value={offerPrice}
-                  onChange={handleProductOffer}
-                  style={{
-                    borderRadius: "5px",
-                    borderColor: "#ced4da",
-                    marginBottom: "10px",
-                    padding: "10px",
-                    width: "100%",
-                  }}
-                />
-                {discountedPrice && (
-                  <p style={{ marginTop: "10px" }}>
-                    Discounted Price: ৳{discountedPrice}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Product YouTube Link */}
-            <div className="form-group">
-              <label htmlFor="productYoutubeLink">Product YouTube Link</label>
+            <div className="col-md-4">
+              <label htmlFor="productTags" className="form-label" style={{ color: "#495057" }}>
+                Product Tags (comma-separated)
+              </label>
               <input
                 type="text"
                 className="form-control"
-                id="productYoutubeLink"
-                value={productYoutubeLink}
-                onChange={(e) => setProductYoutubeLink(e.target.value)}
-                style={{
-                  borderRadius: "5px",
-                  borderColor: "#ced4da",
-                  marginBottom: "10px",
-                  padding: "10px",
-                  width: "100%",
-                }}
+                id="productTags"
+                value={productTags}
+                onChange={handleTagChange}
+                style={{ borderRadius: "6px", padding: "12px", borderColor: "#dee2e6" }}
               />
             </div>
-
-            <div className="form-group">
-              <label htmlFor="productDescription">Product Description</label>
-              <CKEditor
-                editor={ClassicEditor}
-                data={productDescription}
-                onChange={(event, editor) => {
-                  const data = editor.getData();
-                  setProductDescription(data);
-                }}
-                style={{
-                  borderRadius: "5px",
-                  borderColor: "#ced4da",
-                  marginBottom: "10px",
-                  padding: "10px",
-                  width: "100%",
-                }}
-              />
-            </div>
-            {/* Additional Information (Text Editor) */}
-            <div className="form-group">
-              <label htmlFor="additionalInfo">Additional Information</label>
-              <CKEditor
-                editor={ClassicEditor}
-                data={additionalInfo}
-                onChange={(event, editor) => {
-                  const data = editor.getData();
-                  setAdditionalInfo(data);
-                }}
-                style={{
-                  borderRadius: "5px",
-                  borderColor: "#ced4da",
-                  marginBottom: "10px",
-                  padding: "10px",
-                  width: "100%",
-                }}
-              />
-            </div>
-
-            {/* Upload PDF File */}
-            <div className="form-group" style={{ display: "none" }}>
-              <label>Upload PDF File</label>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={handleChoosePdfFile}
-                style={{
-                  borderRadius: "5px",
-                  borderColor: "#ced4da",
-                  marginBottom: "10px",
-                  padding: "10px",
-                  width: "100%",
-                }}
+            <div className="col-md-4">
+              <label className="form-label" style={{ color: "#495057" }}>
+                Product Live
+              </label>
+              <select
+                className="form-select"
+                value={productLive}
+                onChange={(e) => setProductLive(e.target.value)}
+                style={{ borderRadius: "6px", padding: "12px", borderColor: "#dee2e6" }}
               >
-                Choose PDF File
-              </button>
-
-              {pdfFileName && (
-                <p style={{ marginTop: "10px" }}>Selected PDF: {pdfFileName}</p>
-              )}
+                <option value="">Select an option</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+              </select>
             </div>
+          </div>
+  
+          <div className="mb-3">
+            <label htmlFor="shortDescription" className="form-label" style={{ color: "#495057" }}>
+              Short Description
+            </label>
+            <input
+              type="text"
+              className="form-control"
+              id="shortDescription"
+              value={shortDescription}
+              onChange={handleProductDesChange}
+              style={{ borderRadius: "6px", padding: "12px", borderColor: "#dee2e6" }}
+            />
+          </div>
+  
+          <div className="p-3 bg-light rounded shadow-sm mb-4">
+      <label className="form-label fw-bold text-secondary">
+        Product Images
+      </label>
 
-            {errors.productName && (
-              <ErrorMessage message={errors.productName} />
-            )}
-            {errors.selectedCategory && (
-              <ErrorMessage message={errors.selectedCategory} />
-            )}
-            {errors.productImages && (
-              <ErrorMessage message={errors.productImages} />
-            )}
-            {errors.regularPrice && (
-              <ErrorMessage message={errors.regularPrice} />
-            )}
-
-            <button
-              type="submit"
-              className="btn btn-success mt-2 "
-              style={{
-                borderRadius: "5px",
-                borderColor: "#ced4da",
-                marginBottom: "10px",
-                padding: "10px",
-                width: "100%",
-              }}
-              disabled={uploadingImage}
-            >
-              {uploadingImage ? "Uploading..." : "Save Product"}
-            </button>
-          </form>
+      {/* Upload Button */}
+      <div className="d-flex align-items-center mb-3">
+        <div
+          className="border rounded shadow-sm d-flex align-items-center justify-content-center"
+          style={{
+            width: "120px",
+            height: "120px",
+            cursor: "pointer",
+            background: "#f0f0f0",
+          }}
+          onClick={handleChooseFile}
+        >
+          <FontAwesomeIcon icon={faPlus} size="2x" className="text-primary" />
         </div>
+        <input
+          type="file"
+          accept=".jpg,.png,.jpeg"
+          multiple
+          style={{ display: "none" }}
+          ref={fileInputRef}
+          onChange={handleFileInputChange}
+        />
+      </div>
+
+      {/* Image Previews */}
+      <div className="d-flex flex-wrap gap-2">
+        {imagePreviewUrls.map((url, index) => (
+          <div key={index} className="position-relative border rounded shadow-sm overflow-hidden">
+            <img
+              src={url}
+              alt="Preview"
+              className="img-thumbnail"
+              style={{ width: "120px", height: "120px", objectFit: "cover" }}
+            />
+            <button
+              type="button"
+              className="btn btn-danger btn-sm position-absolute top-0 end-0 m-1 p-1 rounded-circle"
+              style={{ width: "24px", height: "24px" }}
+              onClick={() => removeImage(index)}
+            >
+              <FontAwesomeIcon icon={faTimes} size="sm" />
+            </button>
+          </div>
+        ))}
       </div>
     </div>
+  
+          <div className="row g-3 mb-3">
+            <div className="col-md-4">
+              <label htmlFor="productCode" className="form-label" style={{ color: "#495057" }}>
+                Product Code
+              </label>
+              <input
+                type="text"
+                className="form-control"
+                id="productCode"
+                value={productCode}
+                onChange={handleProductCode}
+                style={{ borderRadius: "6px", padding: "12px", borderColor: "#dee2e6" }}
+              />
+            </div>
+            <div className="col-md-4">
+              <label htmlFor="productTP" className="form-label" style={{ color: "#495057" }}>
+                Product TP
+              </label>
+              <input
+                type="number"
+                className="form-control"
+                id="productTP"
+                value={productTP}
+                onChange={handleProductTP}
+                style={{ borderRadius: "6px", padding: "12px", borderColor: "#dee2e6" }}
+              />
+            </div>
+            <div className="col-md-4">
+              <label htmlFor="mrp" className="form-label" style={{ color: "#495057" }}>
+                Product MRP
+              </label>
+              <input
+                type="number"
+                className="form-control"
+                id="mrp"
+                value={mrp}
+                onChange={handleProductMRP}
+                style={{ borderRadius: "6px", padding: "12px", borderColor: "#dee2e6" }}
+              />
+            </div>
+          </div>
+  
+          <div className="row g-3 mb-3">
+            <div className="col-md-6">
+              <label htmlFor="regularPrice" className="form-label" style={{ color: "#495057" }}>
+                Regular Price
+              </label>
+              <input
+                type="number"
+                className="form-control"
+                id="regularPrice"
+                value={regularPrice}
+                onChange={handleRegularPriceChange}
+                style={{ borderRadius: "6px", padding: "12px", borderColor: "#dee2e6" }}
+              />
+            </div>
+            <div className="col-md-6">
+              <label htmlFor="offerPrice" className="form-label" style={{ color: "#495057" }}>
+                Offer Price (%)
+              </label>
+              <input
+                type="number"
+                className="form-control"
+                id="offerPrice"
+                value={offerPrice}
+                onChange={handleProductOffer}
+                style={{ borderRadius: "6px", padding: "12px", borderColor: "#dee2e6" }}
+              />
+              {discountedPrice && (
+                <div className="mt-2 text-muted">
+                  Discounted Price: ৳{discountedPrice}
+                </div>
+              )}
+            </div>
+          </div>
+  
+          <div className="mb-3">
+            <label htmlFor="productYoutubeLink" className="form-label" style={{ color: "#495057" }}>
+              Product YouTube Link
+            </label>
+            <input
+              type="text"
+              className="form-control"
+              id="productYoutubeLink"
+              value={productYoutubeLink}
+              onChange={(e) => setProductYoutubeLink(e.target.value)}
+              style={{ borderRadius: "6px", padding: "12px", borderColor: "#dee2e6" }}
+            />
+          </div>
+  
+          <div className="mb-3">
+            <label htmlFor="productDescription" className="form-label" style={{ color: "#495057" }}>
+              Product Description
+            </label>
+            <CKEditor
+              editor={ClassicEditor}
+              data={productDescription}
+              onChange={(event, editor) => {
+                const data = editor.getData();
+                setProductDescription(data);
+              }}
+              config={{
+                toolbar: {
+                  items: [
+                    'heading', '|',
+                    'bold', 'italic', 'link', '|',
+                    'bulletedList', 'numberedList', '|',
+                    'undo', 'redo'
+                  ]
+                }
+              }}
+            />
+          </div>
+  
+          <div className="mb-3">
+            <label htmlFor="additionalInfo" className="form-label" style={{ color: "#495057" }}>
+              Additional Information
+            </label>
+            <CKEditor
+              editor={ClassicEditor}
+              data={additionalInfo}
+              onChange={(event, editor) => {
+                const data = editor.getData();
+                setAdditionalInfo(data);
+              }}
+              config={{
+                toolbar: {
+                  items: [
+                    'heading', '|',
+                    'bold', 'italic', 'link', '|',
+                    'bulletedList', 'numberedList', '|',
+                    'undo', 'redo'
+                  ]
+                }
+              }}
+            />
+          </div>
+  
+          <button
+            type="submit"
+            className="btn btn-success w-100"
+            style={{ 
+              borderRadius: "6px", 
+              padding: "12px",
+              fontWeight: "500",
+              backgroundColor: "#28a745",
+              borderColor: "#28a745"
+            }}
+            disabled={uploadingImage}
+          >
+            {uploadingImage ? "Uploading..." : "Save Product"}
+          </button>
+  
+          {Object.keys(errors).length > 0 && (
+            <div className="alert alert-danger mt-3" style={{ borderRadius: "6px" }}>
+              {Object.values(errors).map((error, index) => (
+                <div key={index}>{error}</div>
+              ))}
+            </div>
+          )}
+        </form>
+      </div>
+    </div>
+  </div>
   );
 }

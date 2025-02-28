@@ -16,3 +16,16 @@
 
 
 
+.sidebar-container {
+  overflow-y: auto;  /* Enable scrolling */
+  scrollbar-width: none; /* Hide scrollbar for Firefox */
+}
+
+
+ps-sidebar-container-test-id::-webkit-scrollbar {
+  display: none; /* Hide scrollbar for Chrome, Safari, and Edge */
+}
+
+.sidebar-container::-webkit-scrollbar {
+  display: none; /* Hide scrollbar for Chrome, Safari, and Edge */
+}
